@@ -17,6 +17,19 @@ const COLOR_PALETTE = [
   '#84cc16', // Lima
 ];
 
+// Convierte un color hex a rgba con opacidad
+const hexToRgba = (hex, alpha = 0.12) => {
+  if (!hex || !hex.startsWith('#')) return `rgba(100,100,100,${alpha})`;
+  const clean = hex.replace('#', '');
+  const full = clean.length === 3
+    ? clean.split('').map(c => c + c).join('')
+    : clean.substring(0, 6);
+  const r = parseInt(full.substring(0, 2), 16);
+  const g = parseInt(full.substring(2, 4), 16);
+  const b = parseInt(full.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState({ name: '', type: 'expense', emoji: '', color: '#e17055' });
@@ -146,12 +159,23 @@ const Categories = () => {
               expenseCategories.map(category => (
                 <div 
                   key={category.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/30 transition-all"
+                  className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-sm"
+                  style={{ 
+                    borderLeft: `3px solid ${category.color}`,
+                    border: `1px solid ${hexToRgba(category.color, 0.25)}`,
+                    borderLeftWidth: '3px',
+                    borderLeftColor: category.color,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = hexToRgba(category.color, 0.08)}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   <div className="flex items-center gap-3">
                     <span 
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                      style={{ backgroundColor: `${category.color}20` }}
+                      style={{ 
+                        backgroundColor: hexToRgba(category.color, 0.18),
+                        border: `1.5px solid ${hexToRgba(category.color, 0.45)}`
+                      }}
                     >
                       {category.emoji}
                     </span>
@@ -194,12 +218,22 @@ const Categories = () => {
               incomeCategories.map(category => (
                 <div 
                   key={category.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/50 dark:bg-black/20 hover:bg-white/80 dark:hover:bg-black/30 transition-all"
+                  className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-sm"
+                  style={{ 
+                    border: `1px solid ${hexToRgba(category.color, 0.25)}`,
+                    borderLeftWidth: '3px',
+                    borderLeftColor: category.color,
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = hexToRgba(category.color, 0.08)}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   <div className="flex items-center gap-3">
                     <span 
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                      style={{ backgroundColor: `${category.color}20` }}
+                      style={{ 
+                        backgroundColor: hexToRgba(category.color, 0.18),
+                        border: `1.5px solid ${hexToRgba(category.color, 0.45)}`
+                      }}
                     >
                       {category.emoji}
                     </span>

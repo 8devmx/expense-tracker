@@ -1,7 +1,6 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Categories from './pages/Categories';
@@ -12,22 +11,24 @@ import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import IOSInstallHint from './components/IOSInstallHint';
 
-function App () {
+function App() {
   const ProtectedLayout = ({ children }) => (
     <div className="protected-layout-container">
-      <Header /> {/* <-- Añade la cabecera aquí */}
+      <Header />
       <div className="main-content">
         {children}
       </div>
       <BottomNav />
     </div>
   );
+
   return (
     <ThemeProvider>
       <IOSInstallHint />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
+        {/* Raíz — muestra el login directamente */}
+        <Route path="/" element={<Login />} />
+
         <Route
           path="/dashboard"
           element={
@@ -38,7 +39,6 @@ function App () {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/categories"
           element={
@@ -49,7 +49,6 @@ function App () {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/transactions"
           element={
@@ -60,7 +59,6 @@ function App () {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/settings"
           element={
@@ -71,7 +69,9 @@ function App () {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<h1>Página no encontrada</h1>} />
+
+        {/* Cualquier ruta desconocida → raíz */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
   );

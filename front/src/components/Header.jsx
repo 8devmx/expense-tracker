@@ -3,6 +3,7 @@ import { useUser } from '../contexts/UserContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaSun, FaMoon, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import api from '../services/api';
 
 const Header = () => {
   const { user } = useUser();
@@ -23,9 +24,15 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Si falla el logout en el server igual limpiamos localmente
+    } finally {
+      localStorage.removeItem('auth_token');
+      navigate('/', { replace: true });
+    }
   };
 
   if (!user) {
@@ -66,16 +73,21 @@ const Header = () => {
                 role="button" 
                 className="flex items-center gap-2 cursor-pointer p-1 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
               >
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#e17055] to-[#c45c44] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#e17055] to-[#c45c44] flex items-center justify-center overflow-hidden">
                   {user.profile_picture_url ? (
-                    <img 
-                      src={user.profile_picture_url} 
-                      alt="Profile" 
-                      className="w-full h-full rounded-lg object-cover"
+                    <img
+                      src={user.profile_picture_url}
+                      alt={user.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                     />
-                  ) : (
-                    <FaUser className="text-white text-sm" />
-                  )}
+                  ) : null}
+                  <span
+                    className="w-full h-full flex items-center justify-center text-white font-bold text-sm"
+                    style={{ display: user.profile_picture_url ? 'none' : 'flex' }}
+                  >
+                    {user.name?.charAt(0).toUpperCase()}
+                  </span>
                 </div>
               </div>
               <ul tabIndex={0} className="dropdown-content z-[1] menu p-3 shadow-xl rounded-2xl w-56 mt-3 glass-card-dashboard">

@@ -8,7 +8,7 @@ const api = axios.create({
   },
 });
 
-// Configurar el interceptor para añadir el token a cada petición
+// Adjuntar token en cada request
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth_token');
@@ -17,7 +17,21 @@ api.interceptors.request.use(
     }
     return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// Si el servidor responde 401, el token expiró o es inválido:
+// limpiar localStorage y redirigir al login
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      // Redirigir solo si no estamos ya en /login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
     return Promise.reject(error);
   }
 );

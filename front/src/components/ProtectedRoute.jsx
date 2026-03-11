@@ -1,50 +1,50 @@
-// src/components/ProtectedRoute.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import api from '../services/api';
 import { UserProvider } from '../contexts/UserContext';
 
 const ProtectedRoute = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  // null = verificando, true = autenticado, false = no autenticado
+  const [authState, setAuthState] = useState(null);
   const [user, setUser] = useState(null);
-  const authToken = localStorage.getItem('auth_token');
 
   useEffect(() => {
     const verifyToken = async () => {
-      if (!authToken) {
-        setIsAuthenticated(false);
+      const token = localStorage.getItem('auth_token');
+
+      if (!token) {
+        setAuthState(false);
         return;
       }
 
       try {
-        // Petición al endpoint de usuario para verificar el token
         const response = await api.get('/user');
-        setUser(response.data); // <-- Guarda los datos del usuario
-        setIsAuthenticated(true);
-      } catch (err) {
-        console.error('Error de autenticación:', err);
+        setUser(response.data);
+        setAuthState(true);
+      } catch {
         localStorage.removeItem('auth_token');
-        setIsAuthenticated(false);
+        setAuthState(false);
       }
     };
-    verifyToken();
-  }, [authToken]);
 
-  if (isAuthenticated === null || user === null) {
+    verifyToken();
+  }, []);
+
+  // Verificando — mostrar spinner centrado
+  if (authState === null) {
     return (
-      <div className="container">
-        <div className="card">
-          <div className="skeleton skeleton-title"></div>
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #e17055 100%)' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
+          <p className="text-white font-medium">Verificando sesión...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!authToken) {
+  // Sin sesión — redirigir al login
+  if (!authState) {
     return <Navigate to="/login" replace />;
   }
 
