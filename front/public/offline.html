@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sin conexión — Gastos</title>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #e17055 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      text-align: center;
+      margin: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 320px;
+    }
+    h1 { font-size: 48px; margin: 0 0 8px; }
+    p { opacity: 0.85; line-height: 1.5; }
+    button {
+      margin-top: 20px;
+      background: #e17055;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>📵</h1>
+    <h2>Sin conexión</h2>
+    <p>No se puede conectar al servidor. Revisa tu conexión a internet e intenta de nuevo.</p>
+    <button onclick="window.location.reload()">Reintentar</button>
+  </div>
+</body>
+</html>

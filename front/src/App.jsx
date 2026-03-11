@@ -10,6 +10,7 @@ import Settings from './pages/Settings';
 import { ThemeProvider } from './contexts/ThemeContext';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
+import IOSInstallHint from './components/IOSInstallHint';
 
 function App () {
   const ProtectedLayout = ({ children }) => (
@@ -23,6 +24,7 @@ function App () {
   );
   return (
     <ThemeProvider>
+      <IOSInstallHint />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

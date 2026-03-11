@@ -70,8 +70,9 @@ const Dashboard = () => {
           const month = index + 1;
           let monthlyIncome = 0;
           let monthlyExpenses = 0;
+          const monthTransactions = response.data.transactions ?? response.data;
 
-          response.data.forEach(transaction => {
+          monthTransactions.forEach(transaction => {
             const amount = parseFloat(transaction.amount);
             if (transaction.type === 'income') {
               monthlyIncome += amount;
