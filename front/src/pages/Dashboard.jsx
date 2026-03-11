@@ -26,7 +26,9 @@ const Dashboard = () => {
         }
 
         const responses = await Promise.all(promises);
-        const allTransactions = responses.flatMap(response => response.data);
+        const allTransactions = responses.flatMap(response => 
+          response.data.transactions ?? response.data
+        );
 
         let totalIncome = 0;
         let totalExpenses = 0;

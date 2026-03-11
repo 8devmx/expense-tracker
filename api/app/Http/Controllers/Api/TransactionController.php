@@ -111,7 +111,13 @@ class TransactionController extends Controller
         }
 
         $sortedTransactions = $finalTransactions->sortBy('date')->values();
-        return response()->json($sortedTransactions);
+        return response()->json([
+            'transactions' => $sortedTransactions,
+            'period' => [
+                'start' => $startDate->format('Y-m-d'),
+                'end'   => $endDate->format('Y-m-d'),
+            ],
+        ]);
     }
 
     public function store(Request $request)

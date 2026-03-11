@@ -26,6 +26,7 @@ const Transactions = () => {
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [balance, setBalance] = useState(0);
+  const [period, setPeriod] = useState(null);
 
   useEffect(() => {
     let income = 0;
@@ -57,7 +58,10 @@ const Transactions = () => {
         api.get('/categories')
       ]);
 
-      const formattedTransactions = transactionsResponse.data.map(t => ({
+      const { transactions: rawTransactions, period: periodData } = transactionsResponse.data;
+      setPeriod(periodData);
+
+      const formattedTransactions = rawTransactions.map(t => ({
         ...t,
         date: new Date(t.date),
         repeat_end_date: t.repeat_end_date ? new Date(t.repeat_end_date) : null,
@@ -208,6 +212,13 @@ const Transactions = () => {
             <h2 className="text-2xl font-bold capitalize" style={{ fontFamily: 'Poppins, sans-serif' }}>
               {currentDisplayDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
             </h2>
+            {period && (
+              <p className="text-xs text-[#6b7280] mt-0.5">
+                {new Date(period.start + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
+                {' – '}
+                {new Date(period.end + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </p>
+            )}
           </div>
           <button onClick={() => handleMonthChange('next')} className="month-nav-btn">
             <FaChevronRight className="w-5 h-5" />
@@ -284,8 +295,16 @@ const Transactions = () => {
                       <span className="font-medium">{transaction.description}</span>
                     </td>
                     <td>
-                      <span className={`badge ${transaction.type === 'income' ? 'badge-income' : 'badge-expense'}`}>
-                        {transaction.category ? transaction.category.name : getCategoryName(transaction.category_id)}
+                      <span
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                        style={transaction.category?.color ? {
+                          backgroundColor: transaction.category.color + '28',
+                          color: transaction.category.color,
+                        } : {}}
+                      >
+                        {transaction.category
+                          ? `${transaction.category.emoji ?? ''} ${transaction.category.name}`.trim()
+                          : getCategoryName(transaction.category_id)}
                       </span>
                     </td>
                     <td className="text-right">
