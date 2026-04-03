@@ -263,7 +263,7 @@ const Categories = () => {
       </div>
 
       {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowAddForm(false)}></div>
           <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -361,7 +361,7 @@ const Categories = () => {
       )}
 
       {editingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setEditingCategory(null)}></div>
           <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>

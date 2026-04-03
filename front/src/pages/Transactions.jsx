@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { FaEdit, FaTrash, FaChevronLeft, FaChevronRight, FaPlus, FaArrowUp, FaArrowDown, FaCalendar } from 'react-icons/fa';
 import { formatCurrency } from '../utils/format';
-import DatePicker from 'react-datepicker';
-import "react-datepicker/dist/react-datepicker.css";
+import CustomDatePicker from '../components/CustomDatePicker';
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -347,154 +346,158 @@ const Transactions = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowForm(false)}></div>
-          <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#e17055] to-[#f5a692] flex items-center justify-center">
-                <FaPlus className="w-4 h-4 text-white" />
-              </span>
-              Nueva Transacción
-            </h3>
+          <div className="modal-content-custom w-full max-w-lg animate-slide-up relative z-10 flex flex-col" style={{ maxHeight: '90vh' }}>
+            <div className="px-6 pt-5 pb-3 flex-shrink-0">
+              <h3 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#e17055] to-[#f5a692] flex items-center justify-center">
+                  <FaPlus className="w-4 h-4 text-white" />
+                </span>
+                Nueva Transacción
+              </h3>
+            </div>
+            <div className="overflow-y-auto px-6 pb-2 flex-1">
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="form-label-custom">Descripción</label>
-                <input 
-                  type="text" 
-                  name="description" 
-                  value={newTransaction.description} 
-                  onChange={handleChange} 
-                  className="form-input-custom" 
-                  required 
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Monto</label>
-                <input 
-                  type="number" 
-                  name="amount" 
-                  value={newTransaction.amount} 
-                  onChange={handleChange} 
-                  className="form-input-custom" 
-                  required 
-                  step="0.01"
-                />
-              </div>
-              <div className="mb-4">
+
+              {/* Fila 1: Tipo */}
+              <div className="mb-3">
                 <label className="form-label-custom">Tipo</label>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense' }))}
-                    className={`flex-1 py-3-xl font-medium transition-all ${
-                      newTransaction.type === 'expense' 
-                        ? 'bg-[ px-4 rounded#e17055] text-white shadow-lg' 
-                        : 'bg-[#fde8e4] text-[#e17055]'
-                    }`}
-                  >
-                    Gasto
+                  <button type="button"
+                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'expense', category_id: '' }))}
+                    className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                      newTransaction.type === 'expense' ? 'bg-[#e17055] text-white shadow-lg' : 'bg-[#fde8e4] text-[#e17055]'
+                    }`}>
+                    💸 Gasto
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income' }))}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                      newTransaction.type === 'income' 
-                        ? 'bg-[#10b981] text-white shadow-lg' 
-                        : 'bg-[#d1fae5] text-[#10b981]'
-                    }`}
-                  >
-                    Ingreso
+                  <button type="button"
+                    onClick={() => setNewTransaction(prev => ({ ...prev, type: 'income', category_id: '' }))}
+                    className={`flex-1 py-2.5 px-4 rounded-xl font-medium transition-all ${
+                      newTransaction.type === 'income' ? 'bg-[#10b981] text-white shadow-lg' : 'bg-[#d1fae5] text-[#10b981]'
+                    }`}>
+                    💰 Ingreso
                   </button>
                 </div>
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Fecha</label>
-                <DatePicker
-                  selected={newTransaction.date}
-                  onChange={(date) => setNewTransaction({ ...newTransaction, date: date })}
-                  className="form-input-custom"
-                  dateFormat="yyyy-MM-dd"
-                  showYearDropdown
-                  scrollableYearDropdown
-                  wrapperClassName="w-full"
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Categoría</label>
-                <select 
-                  name="category_id" 
-                  value={newTransaction.category_id} 
-                  onChange={handleChange} 
-                  className="form-input-custom"
-                  required
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {filteredCategories(newTransaction.type).map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
               </div>
 
-              {newTransaction.type === 'expense' && (
-                <div className="mb-4">
-                  <label className="form-label-custom">Repetir</label>
-                  <select
-                    name="repeat_frequency"
-                    value={newTransaction.repeat_frequency}
-                    onChange={handleChange}
-                    className="form-input-custom"
-                  >
-                    <option value="none">Ninguno</option>
-                    <option value="daily">Diario</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="biweekly">Quincenal</option>
-                    <option value="monthly">Mensual</option>
-                    <option value="bimonthly">Bimestral</option>
-                  </select>
+              {/* Fila 2: Monto + Fecha */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label className="form-label-custom">Monto</label>
+                  <input type="number" name="amount" value={newTransaction.amount}
+                    onChange={handleChange} className="form-input-custom" required step="0.01" placeholder="0.00" />
                 </div>
-              )}
-              {newTransaction.repeat_frequency !== 'none' && (
-                <div className="mb-4">
-                  <label className="form-label-custom">Repetir hasta</label>
-                  <DatePicker
-                    selected={newTransaction.repeat_end_date}
-                    onChange={(date) => setNewTransaction({ ...newTransaction, repeat_end_date: date })}
-                    className="form-input-custom"
-                    dateFormat="yyyy-MM-dd"
-                    showYearDropdown
-                    scrollableYearDropdown
-                    wrapperClassName="w-full"
+                <div>
+                  <label className="form-label-custom">Fecha</label>
+                  <CustomDatePicker
+                    selected={newTransaction.date}
+                    onChange={(date) => setNewTransaction({ ...newTransaction, date })}
                   />
                 </div>
+              </div>
+
+              {/* Fila 3: Descripción */}
+              <div className="mb-3">
+                <label className="form-label-custom">Descripción</label>
+                <input type="text" name="description" value={newTransaction.description}
+                  onChange={handleChange} className="form-input-custom" required placeholder="Ej: Gasolina, comida..." />
+              </div>
+
+              {/* Fila 4: Categoría — grid 4 columnas */}
+              <div className="mb-3">
+                <label className="form-label-custom">Categoría</label>
+                <div className="grid grid-cols-4 gap-1.5 mt-1">
+                  {filteredCategories(newTransaction.type).map(category => {
+                    const isSelected = String(newTransaction.category_id) === String(category.id);
+                    const hex = category.color || '#6b7280';
+                    return (
+                      <button key={category.id} type="button"
+                        onClick={() => setNewTransaction(prev => ({ ...prev, category_id: category.id }))}
+                        className="flex flex-col items-center gap-0.5 p-1.5 rounded-xl transition-all duration-150 cursor-pointer"
+                        style={{
+                          border: isSelected ? `2px solid ${hex}` : '2px solid transparent',
+                          backgroundColor: isSelected ? hex + '22' : 'rgba(0,0,0,0.04)',
+                          color: isSelected ? hex : '#374151',
+                          boxShadow: isSelected ? `0 0 0 1px ${hex}40` : 'none',
+                        }}>
+                        <span className="text-lg">{category.emoji}</span>
+                        <span className="text-center leading-tight" style={{ fontSize: '10px', fontWeight: 500 }}>{category.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {!newTransaction.category_id && (
+                  <p className="text-xs text-[#e17055] mt-1">Selecciona una categoría</p>
+                )}
+              </div>
+
+              {/* Fila 5: Repetir + Fecha fin (solo gastos) */}
+              {newTransaction.type === 'expense' && (
+                <div className="mb-3">
+                  <label className="form-label-custom">Repetir</label>
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {[
+                      { value: 'none', label: 'No', icon: '🚫' },
+                      { value: 'daily', label: 'Diario', icon: '📅' },
+                      { value: 'weekly', label: 'Semanal', icon: '📆' },
+                      { value: 'biweekly', label: 'Quincenal', icon: '🗓️' },
+                      { value: 'monthly', label: 'Mensual', icon: '📊' },
+                      { value: 'bimonthly', label: 'Bimestral', icon: '🔄' },
+                    ].map(opt => {
+                      const isSelected = (newTransaction.repeat_frequency || 'none') === opt.value;
+                      return (
+                        <button key={opt.value} type="button"
+                          onClick={() => setNewTransaction(prev => ({ ...prev, repeat_frequency: opt.value }))}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
+                          style={{
+                            background: isSelected ? '#e17055' : 'rgba(0,0,0,0.05)',
+                            color: isSelected ? 'white' : '#6b7280',
+                            boxShadow: isSelected ? '0 2px 8px rgba(225,112,85,0.35)' : 'none',
+                            border: isSelected ? '1.5px solid #e17055' : '1.5px solid transparent',
+                          }}>
+                          <span>{opt.icon}</span>
+                          <span>{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {newTransaction.repeat_frequency !== 'none' && (
+                    <div className="mt-3">
+                      <label className="form-label-custom">Repetir hasta</label>
+                      <CustomDatePicker
+                        selected={newTransaction.repeat_end_date}
+                        onChange={(date) => setNewTransaction({ ...newTransaction, repeat_end_date: date })}
+                        placeholder="Sin fecha límite"
+                      />
+                    </div>
+                  )}
+                </div>
               )}
 
-              <div className="flex gap-3 mt-6">
-                <button type="submit" className="btn-primary-custom flex-1">
-                  Guardar
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowForm(false)} 
-                  className="btn-secondary-custom px-6"
-                >
-                  Cancelar
-                </button>
+              <div className="flex gap-3 mt-4 mb-2">
+                <button type="submit" className="btn-primary-custom flex-1">Guardar</button>
+                <button type="button" onClick={() => setShowForm(false)} className="btn-secondary-custom px-6">Cancelar</button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
 
       {editingTransaction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setEditingTransaction(null)}></div>
-          <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] flex items-center justify-center">
-                <FaEdit className="w-4 h-4 text-white" />
-              </span>
-              Editar Transacción
-            </h3>
+          <div className="modal-content-custom w-full max-w-md animate-slide-up relative z-10 flex flex-col" style={{ maxHeight: '90vh' }}>
+            <div className="p-6 pb-2 flex-shrink-0">
+              <h3 className="text-xl font-bold flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] flex items-center justify-center">
+                  <FaEdit className="w-4 h-4 text-white" />
+                </span>
+                Editar Transacción
+              </h3>
+            </div>
+            <div className="overflow-y-auto px-6 pb-2 flex-1">
             <form onSubmit={handleEdit}>
               <div className="mb-4">
                 <label className="form-label-custom">Descripción</label>
@@ -548,61 +551,77 @@ const Transactions = () => {
               </div>
               <div className="mb-4">
                 <label className="form-label-custom">Fecha</label>
-                <DatePicker
+                <CustomDatePicker
                   selected={editingTransaction.date}
-                  onChange={(date) => setEditingTransaction({ ...editingTransaction, date: date })}
-                  className="form-input-custom"
-                  dateFormat="yyyy-MM-dd"
-                  showYearDropdown
-                  scrollableYearDropdown
-                  wrapperClassName="w-full"
+                  onChange={(date) => setEditingTransaction({ ...editingTransaction, date })}
                 />
               </div>
               <div className="mb-4">
                 <label className="form-label-custom">Categoría</label>
-                <select 
-                  name="category_id" 
-                  value={editingTransaction.category_id} 
-                  onChange={handleEditChange} 
-                  className="form-input-custom"
-                  required
-                >
-                  {filteredCategories(editingTransaction.type).map(category => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-3 gap-2 mt-1">
+                  {filteredCategories(editingTransaction.type).map(category => {
+                    const isSelected = String(editingTransaction.category_id) === String(category.id);
+                    const hex = category.color || '#6b7280';
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => setEditingTransaction(prev => ({ ...prev, category_id: category.id }))}
+                        className="flex flex-col items-center gap-1 p-2 rounded-xl text-xs font-medium transition-all duration-150 cursor-pointer"
+                        style={{
+                          border: isSelected ? `2px solid ${hex}` : '2px solid transparent',
+                          backgroundColor: isSelected ? hex + '22' : 'rgba(0,0,0,0.04)',
+                          color: isSelected ? hex : 'inherit',
+                          boxShadow: isSelected ? `0 0 0 1px ${hex}40` : 'none',
+                        }}
+                      >
+                        <span className="text-xl">{category.emoji}</span>
+                        <span className="leading-tight text-center">{category.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {editingTransaction.type === 'expense' && (
                 <div className="mb-4">
                   <label className="form-label-custom">Repetir</label>
-                  <select
-                    name="repeat_frequency"
-                    value={editingTransaction.repeat_frequency || 'none'}
-                    onChange={handleEditChange}
-                    className="form-input-custom"
-                  >
-                    <option value="none">Ninguno</option>
-                    <option value="daily">Diario</option>
-                    <option value="weekly">Semanal</option>
-                    <option value="biweekly">Quincenal</option>
-                    <option value="monthly">Mensual</option>
-                    <option value="bimonthly">Bimestral</option>
-                  </select>
-                </div>
-              )}
-              {editingTransaction.repeat_frequency !== 'none' && (
-                <div className="mb-4">
-                  <label className="form-label-custom">Repetir hasta</label>
-                  <DatePicker
-                    selected={editingTransaction.repeat_end_date}
-                    onChange={(date) => setEditingTransaction({ ...editingTransaction, repeat_end_date: date })}
-                    className="form-input-custom"
-                    dateFormat="yyyy-MM-dd"
-                    showYearDropdown
-                    scrollableYearDropdown
-                    wrapperClassName="w-full"
-                  />
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {[
+                      { value: 'none', label: 'No', icon: '🚫' },
+                      { value: 'daily', label: 'Diario', icon: '📅' },
+                      { value: 'weekly', label: 'Semanal', icon: '📆' },
+                      { value: 'biweekly', label: 'Quincenal', icon: '🗓️' },
+                      { value: 'monthly', label: 'Mensual', icon: '📊' },
+                      { value: 'bimonthly', label: 'Bimestral', icon: '🔄' },
+                    ].map(opt => {
+                      const isSelected = (editingTransaction.repeat_frequency || 'none') === opt.value;
+                      return (
+                        <button key={opt.value} type="button"
+                          onClick={() => setEditingTransaction(prev => ({ ...prev, repeat_frequency: opt.value }))}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150"
+                          style={{
+                            background: isSelected ? '#e17055' : 'rgba(0,0,0,0.05)',
+                            color: isSelected ? 'white' : '#6b7280',
+                            boxShadow: isSelected ? '0 2px 8px rgba(225,112,85,0.35)' : 'none',
+                            border: isSelected ? '1.5px solid #e17055' : '1.5px solid transparent',
+                          }}>
+                          <span>{opt.icon}</span>
+                          <span>{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {editingTransaction.repeat_frequency && editingTransaction.repeat_frequency !== 'none' && (
+                    <div className="mt-3">
+                      <label className="form-label-custom">Repetir hasta</label>
+                      <CustomDatePicker
+                        selected={editingTransaction.repeat_end_date}
+                        onChange={(date) => setEditingTransaction({ ...editingTransaction, repeat_end_date: date })}
+                        placeholder="Sin fecha límite"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -619,6 +638,7 @@ const Transactions = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
