@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentación interna
+    url: https://github.com/8devmx/web-marketing
+    about: Revisa la documentación de la agencia antes de crear un issue.
