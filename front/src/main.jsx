@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google'; // <-- Importa este
 import App from './App.jsx';
 import './App.css';
+import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -1,11 +1,14 @@
-// src/contexts/ThemeContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+const THEME_LIGHT = 'expense-tracker';
+const THEME_DARK = 'expense-tracker-dark';
+
 export const ThemeProvider = ({ children }) => {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const [theme, setTheme] = useState(
-    localStorage.getItem('theme') || 'light'
+    localStorage.getItem('theme') || (prefersDark ? THEME_DARK : THEME_LIGHT)
   );
 
   useEffect(() => {
@@ -14,7 +17,7 @@ export const ThemeProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(currentTheme => (currentTheme === 'light' ? 'dark' : 'light'));
+    setTheme(t => (t === THEME_LIGHT ? THEME_DARK : THEME_LIGHT));
   };
 
   return (
@@ -24,6 +27,4 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-export const useTheme = () => {
-  return useContext(ThemeContext);
-};
+export const useTheme = () => useContext(ThemeContext);

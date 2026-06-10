@@ -1,160 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { FaCalendarAlt, FaSave, FaCog } from 'react-icons/fa';
+import { FiSun, FiMoon, FiLogOut, FiChevronRight } from 'react-icons/fi';
+import { useTheme } from '../contexts/ThemeContext';
+
+const THEME_DARK = 'expense-tracker-dark';
+
+const Section = ({ title, children }) => (
+  <div className="mb-5">
+    <p className="section-label ml-3.5 mb-1.5">{title}</p>
+    <div className="card bg-base-100 shadow-sm">{children}</div>
+  </div>
+);
 
 const Settings = () => {
-  const [settings, setSettings] = useState({
-    transaction_month_start_day: 1,
-  });
+  const [settings, setSettings] = useState({ transaction_month_start_day: 1 });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    fetchSettings();
+    api.get('/settings').then(res => {
+      setSettings({ transaction_month_start_day: res.data.transaction_month_start_day || 1 });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const fetchSettings = async () => {
+  const handleSave = async (day) => {
     try {
-      const response = await api.get('/settings');
-      const data = response.data;
-      
-      setSettings({
-        transaction_month_start_day: data.transaction_month_start_day || 1,
-      });
-      setLoading(false);
-    } catch (err) {
-      console.error('Error al obtener configuración:', err);
-      setLoading(false);
+      await api.put('/settings', { transaction_month_start_day: day });
+      setSettings(p => ({ ...p, transaction_month_start_day: day }));
+      setMessage({ type: 'success', text: 'Guardado' });
+      setTimeout(() => setMessage(null), 2000);
+    } catch { setMessage({ type: 'error', text: 'Error' }); }
+  };
+
+  const handleLogout = async () => {
+    try { await api.post('/auth/logout'); } catch {} finally {
+      localStorage.removeItem('auth_token');
+      window.location.href = '/';
     }
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage(null);
-
-    try {
-      const payload = {
-        transaction_month_start_day: parseInt(settings.transaction_month_start_day),
-      };
-
-      await api.put('/settings', payload);
-      setMessage({ type: 'success', text: 'Configuración guardada correctamente' });
-      
-      setTimeout(() => setMessage(null), 3000);
-    } catch (err) {
-      console.error('Error al guardar:', err);
-      setMessage({ type: 'error', text: 'Error al guardar la configuración' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-[#e17055] border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-[#e17055] font-medium">Cargando configuración...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex justify-center pt-20">
+    <div className="card bg-base-100 shadow-md p-5">
+      <span className="loading loading-spinner loading-md mx-auto block" />
+    </div>
+  </div>;
 
   return (
-    <div className="page-container">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8b5cf6] to-[#a78bfa] flex items-center justify-center">
-            <FaCog className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="text-3xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Configuración
-            </h2>
-            <p className="text-[#6b7280] mt-1">Personaliza tu experiencia</p>
-          </div>
-        </div>
+    <div>
+      <Section title="Apariencia">
+        <label className="flex items-center gap-3 w-full px-4 py-3.5 text-left text-sm cursor-pointer">
+          <span className="text-lg w-6 text-center flex-shrink-0 text-base-content/60">
+            {theme === THEME_DARK ? <FiMoon /> : <FiSun />}
+          </span>
+          <span className="flex-1">Modo oscuro</span>
+          <input
+            type="checkbox"
+            checked={theme === THEME_DARK}
+            onChange={toggleTheme}
+            className="toggle toggle-sm"
+          />
+        </label>
+      </Section>
 
-        <div className="glass-card-dashboard p-6 animate-slide-up">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#e17055] to-[#f5a692] flex items-center justify-center">
-              <FaCalendarAlt className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="text-xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Día de Inicio del Mes
-            </h3>
-          </div>
-
-          <p className="text-[#6b7280] mb-6">
-            Selecciona el día de inicio del mes para mostrar tus transacciones. 
-            Cada mes mostrará transacciones desde este día hasta el día anterior del siguiente mes.
+      <Section title="Preferencias">
+        <div className="px-4 py-3.5">
+          <label className="form-control w-full">
+            <span className="label-text text-xs text-base-content/60 mb-1.5">Día de inicio del mes</span>
+            <select value={settings.transaction_month_start_day} onChange={(e) => handleSave(parseInt(e.target.value))} className="select select-bordered w-full">
+              {[...Array(28)].map((_, i) => <option key={i + 1} value={i + 1}>Día {i + 1}</option>)}
+            </select>
+          </label>
+          <p className="caption mt-2 leading-relaxed">
+            Al navegar a Marzo 2026, se mostrarán transacciones del día {settings.transaction_month_start_day} de Febrero al día {settings.transaction_month_start_day - 1} de Marzo.
           </p>
-
-          <form onSubmit={handleSave}>
-            <div className="mb-6">
-              <label className="form-label-custom">Día de inicio del mes</label>
-              <select
-                value={settings.transaction_month_start_day}
-                onChange={(e) => setSettings(prev => ({ 
-                  ...prev, 
-                  transaction_month_start_day: parseInt(e.target.value) 
-                }))}
-                className="form-input-custom"
-              >
-                {[...Array(28)].map((_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    Día {i + 1}
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-[#6b7280] mt-2">
-                Ejemplo: Si seleccionas el <strong>día 25</strong>, al navegar a 
-                <strong> Marzo 2026</strong>, se mostrarán transacciones del 
-                <strong> 25 Febrero al 24 Marzo</strong>.
-              </p>
+          {message && (
+            <div className={`alert mt-2 text-xs py-1.5 ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+              {message.text}
             </div>
-
-            {message && (
-              <div className={`mb-4 p-3 rounded-xl ${
-                message.type === 'success' 
-                  ? 'bg-[#d1fae5] text-[#059669]' 
-                  : 'bg-[#fde8e4] text-[#e17055]'
-              }`}>
-                {message.text}
-              </div>
-            )}
-
-            <button 
-              type="submit" 
-              className="btn-primary-custom flex items-center gap-2"
-              disabled={saving}
-            >
-              {saving ? (
-                <>
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  <FaSave className="w-4 h-4" />
-                  Guardar Configuración
-                </>
-              )}
-            </button>
-          </form>
+          )}
         </div>
+      </Section>
 
-        <div className="mt-6 glass-card-dashboard p-4">
-          <p className="text-sm text-[#6b7280]">
-            <strong>Nota:</strong> Esta configuración afecta cómo se muestran las transacciones en el módulo de Transacciones. 
-            El rango de fechas se calculará automáticamente según el mes que navegues.
-          </p>
-        </div>
-      </div>
+      <Section title="Cuenta">
+        <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3.5 text-left text-sm text-error">
+          <span className="text-lg w-6 text-center flex-shrink-0"><FiLogOut /></span>
+          <span className="flex-1">Cerrar sesión</span>
+          <FiChevronRight size={16} />
+        </button>
+      </Section>
     </div>
   );
 };

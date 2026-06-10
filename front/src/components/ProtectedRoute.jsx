@@ -4,49 +4,37 @@ import api from '../services/api';
 import { UserProvider } from '../contexts/UserContext';
 
 const ProtectedRoute = ({ children }) => {
-  // null = verificando, true = autenticado, false = no autenticado
-  const [authState, setAuthState] = useState(null);
+  const [state, setState] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const verifyToken = async () => {
+    const verify = async () => {
       const token = localStorage.getItem('auth_token');
-
-      if (!token) {
-        setAuthState(false);
-        return;
-      }
-
+      if (!token) { setState(false); return; }
       try {
-        const response = await api.get('/user');
-        setUser(response.data);
-        setAuthState(true);
+        const res = await api.get('/user');
+        setUser(res.data);
+        setState(true);
       } catch {
         localStorage.removeItem('auth_token');
-        setAuthState(false);
+        setState(false);
       }
     };
-
-    verifyToken();
+    verify();
   }, []);
 
-  // Verificando — mostrar spinner centrado
-  if (authState === null) {
+  if (state === null) {
     return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #e17055 100%)' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          <p className="text-white font-medium">Verificando sesión...</p>
+      <div className="min-h-screen flex items-center justify-center bg-base-200 bg-gradient">
+        <div className="card bg-base-100 shadow-md p-8 text-center">
+          <span className="loading loading-spinner loading-lg mb-3" />
+          <p className="caption">Verificando sesión...</p>
         </div>
       </div>
     );
   }
 
-  // Sin sesión — redirigir al login
-  if (!authState) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!state) return <Navigate to="/" replace />;
 
   return <UserProvider initialUser={user}>{children}</UserProvider>;
 };

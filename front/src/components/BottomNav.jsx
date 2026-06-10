@@ -1,114 +1,40 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { FaChartLine, FaExchangeAlt, FaTags, FaCog } from 'react-icons/fa';
+import { LuChartColumn, LuArrowLeftRight, LuGrid3X3, LuSettings } from 'react-icons/lu';
+
+const tabs = [
+  { to: '/dashboard', icon: LuChartColumn, label: 'Dashboard' },
+  { to: '/transactions', icon: LuArrowLeftRight, label: 'Movimientos' },
+  { to: '/categories', icon: LuGrid3X3, label: 'Categorías' },
+  { to: '/settings', icon: LuSettings, label: 'Ajustes' },
+];
 
 const BottomNav = () => {
   return (
-    <nav className="bottom-nav-glass">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-around h-14">
-          <NavLink 
-            to="/dashboard" 
-            className={({ isActive }) => `
-              flex flex-col items-center justify-center flex-1 h-full
-              transition-all duration-200 rounded-xl
-              ${isActive 
-                ? 'text-[#e17055]' 
-                : 'text-[#6b7280] hover:text-[#e17055] hover:bg-[#fde8e4]/50'}
-            `}
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`relative ${isActive ? 'text-[#e17055]' : ''}`}>
-                  <FaChartLine className="w-6 h-6" />
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#e17055]"></span>
-                  )}
-                </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-[#e17055]' : ''}`}>
-                  Dashboard
-                </span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/transactions" 
-            className={({ isActive }) => `
-              flex flex-col items-center justify-center flex-1 h-full
-              transition-all duration-200 rounded-xl
-              ${isActive 
-                ? 'text-[#e17055]' 
-                : 'text-[#6b7280] hover:text-[#e17055] hover:bg-[#fde8e4]/50'}
-            `}
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`relative ${isActive ? 'text-[#e17055]' : ''}`}>
-                  <FaExchangeAlt className="w-6 h-6" />
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#e17055]"></span>
-                  )}
-                </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-[#e17055]' : ''}`}>
-                  Transacciones
-                </span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/categories" 
-            className={({ isActive }) => `
-              flex flex-col items-center justify-center flex-1 h-full
-              transition-all duration-200 rounded-xl
-              ${isActive 
-                ? 'text-[#e17055]' 
-                : 'text-[#6b7280] hover:text-[#e17055] hover:bg-[#fde8e4]/50'}
-            `}
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`relative ${isActive ? 'text-[#e17055]' : ''}`}>
-                  <FaTags className="w-6 h-6" />
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#e17055]"></span>
-                  )}
-                </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-[#e17055]' : ''}`}>
-                  Categorías
-                </span>
-              </>
-            )}
-          </NavLink>
-
-          <NavLink 
-            to="/settings" 
-            className={({ isActive }) => `
-              flex flex-col items-center justify-center flex-1 h-full
-              transition-all duration-200 rounded-xl
-              ${isActive 
-                ? 'text-[#e17055]' 
-                : 'text-[#6b7280] hover:text-[#e17055] hover:bg-[#fde8e4]/50'}
-            `}
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`relative ${isActive ? 'text-[#e17055]' : ''}`}>
-                  <FaCog className="w-6 h-6" />
-                  {isActive && (
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#e17055]"></span>
-                  )}
-                </div>
-                <span className={`text-xs mt-1 font-medium ${isActive ? 'text-[#e17055]' : ''}`}>
-                  Ajustes
-                </span>
-              </>
-            )}
-          </NavLink>
-        </div>
-      </div>
-    </nav>
+    <div className="dock z-50 bg-base-100/85 backdrop-blur-2xl border-t border-base-300/50 rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,0px)] max-w-3xl lg:max-w-6xl mx-auto">
+      {tabs.map(({ to, icon: Icon, label }) => (
+        <NavLink
+          key={to}
+          to={to}
+          className="after:!content-none group"
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <span className="absolute -top-0.5 w-6 h-[3px] rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)]" />
+              )}
+              <Icon
+                size={22}
+                strokeWidth={isActive ? 2.6 : 1.8}
+                className={`transition-all duration-200 ${isActive ? 'text-primary' : 'text-base-content/35 group-hover:text-base-content/55'}`}
+              />
+              <span className={`text-[10px] lg:text-xs leading-none mt-0.5 transition-colors duration-200 ${isActive ? 'font-semibold text-primary' : 'text-base-content/40 group-hover:text-base-content/60'}`}>
+                {label}
+              </span>
+            </>
+          )}
+        </NavLink>
+      ))}
+    </div>
   );
 };
 

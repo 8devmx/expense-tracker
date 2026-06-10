@@ -1,460 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { FaEdit, FaTrash, FaPlus, FaTag, FaCheck } from 'react-icons/fa';
+import { FiPlus, FiEdit, FiTrash, FiCheck } from 'react-icons/fi';
+import { Button, Input, Modal } from '../components/ui';
 
-const COLOR_PALETTE = [
-  '#e17055', // Coral
-  '#d35444', // Rojo oscuro
-  '#10b981', // Verde mint
-  '#059669', // Verde oscuro
-  '#3b82f6', // Azul
-  '#8b5cf6', // Violeta
-  '#f59e0b', // Amarillo
-  '#ec4899', // Rosa
-  '#06b6d4', // Cyan
-  '#64748b', // Gris
-  '#f97316', // Naranja
-  '#84cc16', // Lima
+const PALETTE = [
+  '#D32F2F', '#34c759', '#ff3b30', '#ff9500', '#af52de', '#5ac8fa',
+  '#ff2d55', '#5856d6', '#ffd60a', '#8e8e93', '#30b0c7', '#66d4a8',
 ];
 
-// Convierte un color hex a rgba con opacidad
-const hexToRgba = (hex, alpha = 0.12) => {
-  if (!hex || !hex.startsWith('#')) return `rgba(100,100,100,${alpha})`;
-  const clean = hex.replace('#', '');
-  const full = clean.length === 3
-    ? clean.split('').map(c => c + c).join('')
-    : clean.substring(0, 6);
-  const r = parseInt(full.substring(0, 2), 16);
-  const g = parseInt(full.substring(2, 4), 16);
-  const b = parseInt(full.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+const hexToRgba = (hex, a = 0.12) => {
+  if (!hex) return `rgba(100,100,100,${a})`;
+  const c = hex.replace('#', ''); const f = c.length === 3 ? c.split('').map(x => x + x).join('') : c.substring(0, 6);
+  return `rgba(${parseInt(f.substring(0,2),16)},${parseInt(f.substring(2,4),16)},${parseInt(f.substring(4,6),16)},${a})`;
 };
+
+const Section = ({ title, categories, onEdit, onDelete }) => (
+  <div className="mb-4">
+    <p className="section-label mb-2">{title}</p>
+    <div className="grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 lg:gap-3">
+      {categories.map(cat => (
+        <div key={cat.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="flex flex-col items-center gap-1.5 p-3.5 relative">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
+              style={{ background: hexToRgba(cat.color || '#86868b', 0.2) }}
+            >
+              {cat.emoji || '📁'}
+            </div>
+            <p className="text-[10.5px] font-medium text-center leading-tight">{cat.name}</p>
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" className="bg-base-200/40 hover:bg-base-200/70 rounded-lg" onClick={() => onEdit(cat)}><FiEdit size={14} /></Button>
+              <Button variant="ghost" size="sm" className="bg-base-200/40 hover:bg-base-200/70 rounded-lg text-error" onClick={() => onDelete(cat.id)}><FiTrash size={14} /></Button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
-  const [newCategory, setNewCategory] = useState({ name: '', type: 'expense', emoji: '', color: '#e17055' });
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [form, setForm] = useState(null);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
-    try {
-      const response = await api.get('/categories');
-      setCategories(response.data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error al obtener categorías:', err);
-      setError('No se pudieron cargar las categorías.');
-      setLoading(false);
-    }
+    try { const res = await api.get('/categories'); setCategories(res.data); } catch { setError('Error al cargar.'); } finally { setLoading(false); }
   };
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/categories', newCategory);
-      setNewCategory({ name: '', type: 'expense', emoji: '', color: '#e17055' });
-      setShowAddForm(false);
-      fetchCategories();
-    } catch (err) {
-      console.error('Error al crear categoría:', err);
-      alert('No se pudo crear la categoría. Por favor, revisa la consola.');
-    }
-  };
+  const handleCreate = async () => { try { await api.post('/categories', form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
+  const handleEdit = async () => { try { await api.put(`/categories/${form.data.id}`, form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
+  const handleDelete = async (id) => { if (!window.confirm('¿Eliminar?')) return; try { await api.delete(`/categories/${id}`); fetchCategories(); } catch { alert('Error.'); } };
 
-  const handleEdit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.put(`/categories/${editingCategory.id}`, editingCategory);
-      setEditingCategory(null);
-      fetchCategories();
-    } catch (err) {
-      console.error('Error al editar categoría:', err);
-      alert('No se pudo editar la categoría. Por favor, revisa la consola.');
-    }
-  };
+  const expenseCat = categories.filter(c => c.type === 'expense');
+  const incomeCat = categories.filter(c => c.type === 'income');
 
-  const handleDelete = async (categoryId) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar esta categoría?')) {
-      try {
-        await api.delete(`/categories/${categoryId}`);
-        fetchCategories();
-      } catch (err) {
-        console.error('Error al eliminar categoría:', err);
-        alert('No se pudo eliminar la categoría.');
-      }
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setNewCategory({ ...newCategory, [name]: value });
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditingCategory({ ...editingCategory, [name]: value });
-  };
-
-  const expenseCategories = categories.filter(c => c.type === 'expense');
-  const incomeCategories = categories.filter(c => c.type === 'income');
-
-  if (loading) {
-    return (
-      <div className="page-container">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="w-12 h-12 border-4 border-[#e17055] border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-[#e17055] font-medium">Cargando categorías...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) return (
-    <div className="page-container">
-      <div className="glass-card-dashboard p-6 text-center">
-        <p className="text-[#e17055]">{error}</p>
-      </div>
+  if (loading) return <div className="flex justify-center pt-20">
+    <div className="card bg-base-100 shadow-md p-5">
+      <span className="loading loading-spinner loading-md mx-auto block" />
     </div>
-  );
+  </div>;
+
+  if (error) return <div className="py-10 text-center text-error text-sm">{error}</div>;
 
   return (
-    <div className="page-container">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-        <div>
-          <h2 className="text-3xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Categorías
-          </h2>
-          <p className="text-[#6b7280] mt-1">Gestiona tus categorías de gastos e ingresos</p>
-        </div>
-        <button 
-          className="btn-primary-custom flex items-center gap-2" 
-          onClick={() => setShowAddForm(true)}
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-xs text-base-content/50 font-medium">{categories.length} categorías</p>
+        <Button variant="primary" size="md" onClick={() => setForm({ mode: 'create', data: { name: '', type: 'expense', emoji: '', color: '#DC3545' } })}>
+          <FiPlus size={15} />
+          Añadir
+        </Button>
+      </div>
+
+      <Section title="Gastos" categories={expenseCat} onEdit={(cat) => setForm({ mode: 'edit', data: { ...cat } })} onDelete={handleDelete} />
+      <Section title="Ingresos" categories={incomeCat} onEdit={(cat) => setForm({ mode: 'edit', data: { ...cat } })} onDelete={handleDelete} />
+
+      {form && (
+        <Modal
+          title={form.mode === 'create' ? 'Nueva categoría' : 'Editar categoría'}
+          onClose={() => setForm(null)}
+          footer={
+            <div className="flex gap-2">
+              <Button variant="ghost" className="flex-1" onClick={() => setForm(null)}>Cancelar</Button>
+              <Button variant="primary" className="flex-1" onClick={form.mode === 'create' ? handleCreate : handleEdit}>
+                {form.mode === 'create' ? 'Crear' : 'Guardar'}
+              </Button>
+            </div>
+          }
         >
-          <FaPlus className="w-4 h-4" />
-          Añadir Categoría
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card-dashboard p-6 animate-slide-up" style={{ animationDelay: '0ms' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#e17055] to-[#f5a692] flex items-center justify-center">
-              <FaTag className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Categorías de Gastos
-            </h3>
-          </div>
-          
-          <div className="space-y-3">
-            {expenseCategories.length > 0 ? (
-              expenseCategories.map(category => (
-                <div 
-                  key={category.id}
-                  className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-sm"
-                  style={{ 
-                    borderLeft: `3px solid ${category.color}`,
-                    border: `1px solid ${hexToRgba(category.color, 0.25)}`,
-                    borderLeftWidth: '3px',
-                    borderLeftColor: category.color,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = hexToRgba(category.color, 0.08)}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <div className="flex items-center gap-3">
-                    <span 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                      style={{ 
-                        backgroundColor: hexToRgba(category.color, 0.18),
-                        border: `1.5px solid ${hexToRgba(category.color, 0.45)}`
-                      }}
-                    >
-                      {category.emoji}
-                    </span>
-                    <span className="font-medium">{category.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      className="icon-btn"
-                      onClick={() => setEditingCategory(category)}
-                    >
-                      <FaEdit className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="icon-btn hover:text-[#e17055]"
-                      onClick={() => handleDelete(category.id)}
-                    >
-                      <FaTrash className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-[#9ca3af] text-center py-4">No hay categorías de gastos</p>
-            )}
-          </div>
-        </div>
-
-        <div className="glass-card-dashboard p-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#10b981] to-[#6ee7b7] flex items-center justify-center">
-              <FaTag className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Categorías de Ingresos
-            </h3>
-          </div>
-          
-          <div className="space-y-3">
-            {incomeCategories.length > 0 ? (
-              incomeCategories.map(category => (
-                <div 
-                  key={category.id}
-                  className="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-sm"
-                  style={{ 
-                    border: `1px solid ${hexToRgba(category.color, 0.25)}`,
-                    borderLeftWidth: '3px',
-                    borderLeftColor: category.color,
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = hexToRgba(category.color, 0.08)}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <div className="flex items-center gap-3">
-                    <span 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-                      style={{ 
-                        backgroundColor: hexToRgba(category.color, 0.18),
-                        border: `1.5px solid ${hexToRgba(category.color, 0.45)}`
-                      }}
-                    >
-                      {category.emoji}
-                    </span>
-                    <span className="font-medium">{category.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      className="icon-btn"
-                      onClick={() => setEditingCategory(category)}
-                    >
-                      <FaEdit className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="icon-btn hover:text-[#e17055]"
-                      onClick={() => handleDelete(category.id)}
-                    >
-                      <FaTrash className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-[#9ca3af] text-center py-4">No hay categorías de ingresos</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {showAddForm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowAddForm(false)}></div>
-          <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#e17055] to-[#f5a692] flex items-center justify-center">
-                <FaPlus className="w-4 h-4 text-white" />
-              </span>
-              Nueva Categoría
-            </h3>
-            <form onSubmit={handleCreate}>
-              <div className="mb-4">
-                <label className="form-label-custom">Nombre de la Categoría</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newCategory.name}
-                  onChange={handleChange}
-                  className="form-input-custom"
-                  required
-                />
+          <div className="flex flex-col gap-4 p-5">
+            <Input
+              label="Nombre"
+              type="text"
+              value={form.data.name}
+              onChange={(e) => setForm(f => ({ ...f, data: { ...f.data, name: e.target.value } }))}
+              placeholder="Ej: Comida"
+              required
+            />
+            <Input
+              label="Emoji"
+              type="text"
+              value={form.data.emoji}
+              onChange={(e) => setForm(f => ({ ...f, data: { ...f.data, emoji: e.target.value } }))}
+              placeholder="🍔"
+              required
+            />
+            <label className="form-control w-full">
+              <span className="label-text text-xs text-base-content/60 mb-1">Tipo</span>
+              <div className="flex gap-1.5">
+                {[{ value: 'expense', label: 'Gasto' }, { value: 'income', label: 'Ingreso' }].map(o => (
+                  <Button key={o.value} variant={form.data.type === o.value ? 'primary' : 'ghost'} size="md" className="flex-1" onClick={() => setForm(f => ({ ...f, data: { ...f.data, type: o.value } }))}>
+                    {o.label}
+                  </Button>
+                ))}
               </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Emoji</label>
-                <input
-                  type="text"
-                  name="emoji"
-                  value={newCategory.emoji}
-                  onChange={handleChange}
-                  className="form-input-custom"
-                  placeholder="🍔"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Color</label>
-                <div className="grid grid-cols-6 gap-2">
-                  {COLOR_PALETTE.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setNewCategory(prev => ({ ...prev, color }))}
-                      className={`w-10 h-10 rounded-xl transition-all duration-200 ${
-                        newCategory.color === color 
-                          ? 'ring-2 ring-offset-2 ring-[#e17055] scale-110' 
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    >
-                      {newCategory.color === color && <FaCheck className="w-4 h-4 text-white mx-auto" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Tipo</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setNewCategory(prev => ({ ...prev, type: 'expense' }))}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                      newCategory.type === 'expense' 
-                        ? 'bg-[#c45c44] text-white shadow-lg' 
-                        : 'bg-[#fde8e4] text-[#c45c44]'
-                    }`}
+            </label>
+            <label className="form-control w-full">
+              <span className="label-text text-xs text-base-content/60 mb-1.5">Color</span>
+              <div className="grid grid-cols-6 gap-2">
+                {PALETTE.map(c => (
+                  <button key={c} type="button" onClick={() => setForm(f => ({ ...f, data: { ...f.data, color: c } }))}
+                    className={`w-full h-9 rounded-xl transition-all ${form.data.color === c ? 'ring-2 ring-base-content scale-110 shadow-lg' : 'hover:scale-105'}`}
+                    style={{ background: c }}
                   >
-                    Gasto
+                    {form.data.color === c && <FiCheck size={15} color="white" className="mx-auto" />}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setNewCategory(prev => ({ ...prev, type: 'income' }))}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                      newCategory.type === 'income' 
-                        ? 'bg-[#059669] text-white shadow-lg' 
-                        : 'bg-[#d1fae5] text-[#059669]'
-                    }`}
-                  >
-                    Ingreso
-                  </button>
-                </div>
+                ))}
               </div>
-              <div className="flex gap-3 mt-6">
-                <button type="submit" className="btn-primary-custom flex-1">
-                  Crear Categoría
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddForm(false)} 
-                  className="btn-secondary-custom px-6"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+            </label>
           </div>
-        </div>
-      )}
-
-      {editingCategory && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setEditingCategory(null)}></div>
-          <div className="modal-content-custom p-6 w-full max-w-md animate-slide-up relative z-10">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#60a5fa] flex items-center justify-center">
-                <FaEdit className="w-4 h-4 text-white" />
-              </span>
-              Editar Categoría
-            </h3>
-            <form onSubmit={handleEdit}>
-              <div className="mb-4">
-                <label className="form-label-custom">Nombre de la Categoría</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={editingCategory.name}
-                  onChange={handleEditChange}
-                  className="form-input-custom"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Emoji</label>
-                <input
-                  type="text"
-                  name="emoji"
-                  value={editingCategory.emoji}
-                  onChange={handleEditChange}
-                  className="form-input-custom"
-                  required
-                />
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Color</label>
-                <div className="grid grid-cols-6 gap-2">
-                  {COLOR_PALETTE.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setEditingCategory(prev => ({ ...prev, color }))}
-                      className={`w-10 h-10 rounded-xl transition-all duration-200 ${
-                        editingCategory.color === color 
-                          ? 'ring-2 ring-offset-2 ring-[#e17055] scale-110' 
-                          : 'hover:scale-105'
-                      }`}
-                      style={{ backgroundColor: color }}
-                    >
-                      {editingCategory.color === color && <FaCheck className="w-4 h-4 text-white mx-auto" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="mb-4">
-                <label className="form-label-custom">Tipo</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingCategory(prev => ({ ...prev, type: 'expense' }))}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                      editingCategory.type === 'expense' 
-                        ? 'bg-[#c45c44] text-white shadow-lg' 
-                        : 'bg-[#fde8e4] text-[#c45c44]'
-                    }`}
-                  >
-                    Gasto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingCategory(prev => ({ ...prev, type: 'income' }))}
-                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                      editingCategory.type === 'income' 
-                        ? 'bg-[#059669] text-white shadow-lg' 
-                        : 'bg-[#d1fae5] text-[#059669]'
-                    }`}
-                  >
-                    Ingreso
-                  </button>
-                </div>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button type="submit" className="btn-primary-custom flex-1">
-                  Guardar Cambios
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setEditingCategory(null)} 
-                  className="btn-secondary-custom px-6"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

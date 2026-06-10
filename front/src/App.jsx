@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
@@ -13,11 +12,11 @@ import IOSInstallHint from './components/IOSInstallHint';
 
 function App() {
   const ProtectedLayout = ({ children }) => (
-    <div className="protected-layout-container">
+    <div className="flex flex-col min-h-screen bg-gradient">
       <Header />
-      <div className="main-content">
+      <main className="flex-1 px-5 lg:px-10 py-8 lg:py-12 pb-32 max-w-3xl lg:max-w-6xl w-full mx-auto">
         {children}
-      </div>
+      </main>
       <BottomNav />
     </div>
   );
@@ -26,51 +25,11 @@ function App() {
     <ThemeProvider>
       <IOSInstallHint />
       <Routes>
-        {/* Raíz — muestra el login directamente */}
         <Route path="/" element={<Login />} />
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <Dashboard />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/categories"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <Categories />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/transactions"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <Transactions />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <ProtectedLayout>
-                <Settings />
-              </ProtectedLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Cualquier ruta desconocida → raíz */}
+        <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><Dashboard /></ProtectedLayout></ProtectedRoute>} />
+        <Route path="/categories" element={<ProtectedRoute><ProtectedLayout><Categories /></ProtectedLayout></ProtectedRoute>} />
+        <Route path="/transactions" element={<ProtectedRoute><ProtectedLayout><Transactions /></ProtectedLayout></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><ProtectedLayout><Settings /></ProtectedLayout></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>
