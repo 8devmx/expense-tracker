@@ -48,18 +48,22 @@ create index if not exists idx_user_settings_user_id on public.user_settings(use
 -- Categories
 alter table public.categories enable row level security;
 
+drop policy if exists "Users can view own categories" on public.categories;
 create policy "Users can view own categories"
   on public.categories for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can create own categories" on public.categories;
 create policy "Users can create own categories"
   on public.categories for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own categories" on public.categories;
 create policy "Users can update own categories"
   on public.categories for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own categories" on public.categories;
 create policy "Users can delete own categories"
   on public.categories for delete
   using (auth.uid() = user_id);
@@ -67,18 +71,22 @@ create policy "Users can delete own categories"
 -- Transactions
 alter table public.transactions enable row level security;
 
+drop policy if exists "Users can view own transactions" on public.transactions;
 create policy "Users can view own transactions"
   on public.transactions for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can create own transactions" on public.transactions;
 create policy "Users can create own transactions"
   on public.transactions for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own transactions" on public.transactions;
 create policy "Users can update own transactions"
   on public.transactions for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own transactions" on public.transactions;
 create policy "Users can delete own transactions"
   on public.transactions for delete
   using (auth.uid() = user_id);
@@ -86,19 +94,73 @@ create policy "Users can delete own transactions"
 -- User settings
 alter table public.user_settings enable row level security;
 
+drop policy if exists "Users can view own settings" on public.user_settings;
 create policy "Users can view own settings"
   on public.user_settings for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can create own settings" on public.user_settings;
 create policy "Users can create own settings"
   on public.user_settings for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own settings" on public.user_settings;
 create policy "Users can update own settings"
   on public.user_settings for update
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own settings" on public.user_settings;
 create policy "Users can delete own settings"
+  on public.user_settings for delete
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can create own categories"
+  on public.categories for insert
+  with check (auth.uid() = user_id);
+
+create policy if not exists "Users can update own categories"
+  on public.categories for update
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can delete own categories"
+  on public.categories for delete
+  using (auth.uid() = user_id);
+
+-- Transactions
+alter table public.transactions enable row level security;
+
+create policy if not exists "Users can view own transactions"
+  on public.transactions for select
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can create own transactions"
+  on public.transactions for insert
+  with check (auth.uid() = user_id);
+
+create policy if not exists "Users can update own transactions"
+  on public.transactions for update
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can delete own transactions"
+  on public.transactions for delete
+  using (auth.uid() = user_id);
+
+-- User settings
+alter table public.user_settings enable row level security;
+
+create policy if not exists "Users can view own settings"
+  on public.user_settings for select
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can create own settings"
+  on public.user_settings for insert
+  with check (auth.uid() = user_id);
+
+create policy if not exists "Users can update own settings"
+  on public.user_settings for update
+  using (auth.uid() = user_id);
+
+create policy if not exists "Users can delete own settings"
   on public.user_settings for delete
   using (auth.uid() = user_id);
 -- Helper: get monthly transactions with recurring expansion
@@ -157,7 +219,8 @@ begin
     left join public.categories c on t.category_id = c.id
     where t.user_id = p_user_id
       and (t.repeat_frequency is null or t.repeat_frequency = 'none')
-      and t.date >= v_start_date and t.date <= v_end_date;
+      and t.date >= v_start_date and t.date <= v_end_date
+    order by t.date desc;
 
   for v_rec in
     select t.*, c.name as cat_name, c.emoji as cat_emoji, c.color as cat_color
@@ -234,7 +297,8 @@ begin
     left join public.categories c on t.category_id = c.id
     where t.user_id = p_user_id
       and (t.repeat_frequency is null or t.repeat_frequency = 'none')
-      and t.date >= v_start_date and t.date <= v_end_date;
+      and t.date >= v_start_date and t.date <= v_end_date
+    order by t.date desc;
 
   for v_rec in
     select t.*, c.name as cat_name, c.emoji as cat_emoji, c.color as cat_color
@@ -297,7 +361,8 @@ begin
 end;
 $$;
 
-create or replace trigger on_auth_user_created
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
   after insert on auth.users
   for each row
   execute function public.handle_new_user();

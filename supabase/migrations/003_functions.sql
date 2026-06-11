@@ -54,7 +54,8 @@ begin
     left join public.categories c on t.category_id = c.id
     where t.user_id = p_user_id
       and (t.repeat_frequency is null or t.repeat_frequency = 'none')
-      and t.date >= v_start_date and t.date <= v_end_date;
+      and t.date >= v_start_date and t.date <= v_end_date
+    order by t.date desc;
 
   for v_rec in
     select t.*, c.name as cat_name, c.emoji as cat_emoji, c.color as cat_color
@@ -131,7 +132,8 @@ begin
     left join public.categories c on t.category_id = c.id
     where t.user_id = p_user_id
       and (t.repeat_frequency is null or t.repeat_frequency = 'none')
-      and t.date >= v_start_date and t.date <= v_end_date;
+      and t.date >= v_start_date and t.date <= v_end_date
+    order by t.date desc;
 
   for v_rec in
     select t.*, c.name as cat_name, c.emoji as cat_emoji, c.color as cat_color
