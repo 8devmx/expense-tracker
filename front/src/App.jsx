@@ -6,6 +6,7 @@ import Categories from './pages/Categories';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { UserProvider } from './contexts/UserContext';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import IOSInstallHint from './components/IOSInstallHint';
@@ -23,15 +24,17 @@ function App() {
 
   return (
     <ThemeProvider>
-      <IOSInstallHint />
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><Dashboard /></ProtectedLayout></ProtectedRoute>} />
-        <Route path="/categories" element={<ProtectedRoute><ProtectedLayout><Categories /></ProtectedLayout></ProtectedRoute>} />
-        <Route path="/transactions" element={<ProtectedRoute><ProtectedLayout><Transactions /></ProtectedLayout></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><ProtectedLayout><Settings /></ProtectedLayout></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <UserProvider>
+        <IOSInstallHint />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><Dashboard /></ProtectedLayout></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><ProtectedLayout><Categories /></ProtectedLayout></ProtectedRoute>} />
+          <Route path="/transactions" element={<ProtectedRoute><ProtectedLayout><Transactions /></ProtectedLayout></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><ProtectedLayout><Settings /></ProtectedLayout></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </UserProvider>
     </ThemeProvider>
   );
 }

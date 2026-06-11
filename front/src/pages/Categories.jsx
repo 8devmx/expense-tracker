@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { categoriesApi } from '../services/api';
 import { FiPlus, FiEdit, FiTrash, FiCheck } from 'react-icons/fi';
 import { Button, Input, Modal } from '../components/ui';
 
@@ -21,10 +21,8 @@ const Section = ({ title, categories, onEdit, onDelete }) => (
       {categories.map(cat => (
         <div key={cat.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200">
           <div className="flex flex-col items-center gap-1.5 p-3.5 relative">
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
-              style={{ background: hexToRgba(cat.color || '#86868b', 0.2) }}
-            >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
+              style={{ background: hexToRgba(cat.color || '#86868b', 0.2) }}>
               {cat.emoji || '📁'}
             </div>
             <p className="text-[10.5px] font-medium text-center leading-tight">{cat.name}</p>
@@ -48,12 +46,12 @@ const Categories = () => {
   useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
-    try { const res = await api.get('/categories'); setCategories(res.data); } catch { setError('Error al cargar.'); } finally { setLoading(false); }
+    try { const { data } = await categoriesApi.list(); setCategories(data); } catch { setError('Error al cargar.'); } finally { setLoading(false); }
   };
 
-  const handleCreate = async () => { try { await api.post('/categories', form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
-  const handleEdit = async () => { try { await api.put(`/categories/${form.data.id}`, form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
-  const handleDelete = async (id) => { if (!window.confirm('¿Eliminar?')) return; try { await api.delete(`/categories/${id}`); fetchCategories(); } catch { alert('Error.'); } };
+  const handleCreate = async () => { try { await categoriesApi.create(form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
+  const handleEdit = async () => { try { await categoriesApi.update(form.data.id, form.data); setForm(null); fetchCategories(); } catch { alert('Error.'); } };
+  const handleDelete = async (id) => { if (!window.confirm('¿Eliminar?')) return; try { await categoriesApi.remove(id); fetchCategories(); } catch { alert('Error.'); } };
 
   const expenseCat = categories.filter(c => c.type === 'expense');
   const incomeCat = categories.filter(c => c.type === 'income');
@@ -80,9 +78,7 @@ const Categories = () => {
       <Section title="Ingresos" categories={incomeCat} onEdit={(cat) => setForm({ mode: 'edit', data: { ...cat } })} onDelete={handleDelete} />
 
       {form && (
-        <Modal
-          title={form.mode === 'create' ? 'Nueva categoría' : 'Editar categoría'}
-          onClose={() => setForm(null)}
+        <Modal title={form.mode === 'create' ? 'Nueva categoría' : 'Editar categoría'} onClose={() => setForm(null)}
           footer={
             <div className="flex gap-2">
               <Button variant="ghost" className="flex-1" onClick={() => setForm(null)}>Cancelar</Button>
@@ -90,30 +86,20 @@ const Categories = () => {
                 {form.mode === 'create' ? 'Crear' : 'Guardar'}
               </Button>
             </div>
-          }
-        >
+          }>
           <div className="flex flex-col gap-4 p-5">
-            <Input
-              label="Nombre"
-              type="text"
-              value={form.data.name}
+            <Input label="Nombre" type="text" value={form.data.name}
               onChange={(e) => setForm(f => ({ ...f, data: { ...f.data, name: e.target.value } }))}
-              placeholder="Ej: Comida"
-              required
-            />
-            <Input
-              label="Emoji"
-              type="text"
-              value={form.data.emoji}
+              placeholder="Ej: Comida" required />
+            <Input label="Emoji" type="text" value={form.data.emoji}
               onChange={(e) => setForm(f => ({ ...f, data: { ...f.data, emoji: e.target.value } }))}
-              placeholder="🍔"
-              required
-            />
+              placeholder="🍔" required />
             <label className="form-control w-full">
               <span className="label-text text-xs text-base-content/60 mb-1">Tipo</span>
               <div className="flex gap-1.5">
                 {[{ value: 'expense', label: 'Gasto' }, { value: 'income', label: 'Ingreso' }].map(o => (
-                  <Button key={o.value} variant={form.data.type === o.value ? 'primary' : 'ghost'} size="md" className="flex-1" onClick={() => setForm(f => ({ ...f, data: { ...f.data, type: o.value } }))}>
+                  <Button key={o.value} variant={form.data.type === o.value ? 'primary' : 'ghost'} size="md" className="flex-1"
+                    onClick={() => setForm(f => ({ ...f, data: { ...f.data, type: o.value } }))}>
                     {o.label}
                   </Button>
                 ))}
@@ -125,8 +111,7 @@ const Categories = () => {
                 {PALETTE.map(c => (
                   <button key={c} type="button" onClick={() => setForm(f => ({ ...f, data: { ...f.data, color: c } }))}
                     className={`w-full h-9 rounded-xl transition-all ${form.data.color === c ? 'ring-2 ring-base-content scale-110 shadow-lg' : 'hover:scale-105'}`}
-                    style={{ background: c }}
-                  >
+                    style={{ background: c }}>
                     {form.data.color === c && <FiCheck size={15} color="white" className="mx-auto" />}
                   </button>
                 ))}

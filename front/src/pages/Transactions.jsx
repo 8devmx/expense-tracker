@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { transactionsApi, categoriesApi } from '../services/api';
 import { FiChevronLeft, FiChevronRight, FiPlus, FiEdit, FiTrash, FiCalendar } from 'react-icons/fi';
 import { formatCurrency } from '../utils/format';
 import TransactionModal from '../components/TransactionModal';
 import { Button, Card, CardBody } from '../components/ui';
 
 const FILTERS = ['Todos', 'Ingresos', 'Gastos'];
+
+const mapTx = (t) => ({
+  ...t,
+  category: t.category_name ? {
+    name: t.category_name,
+    emoji: t.category_emoji,
+    color: t.category_color,
+  } : null,
+  date: new Date(t.date + 'T12:00:00'),
+  repeat_end_date: t.repeat_end_date ? new Date(t.repeat_end_date + 'T12:00:00') : null,
+});
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -29,14 +40,16 @@ const Transactions = () => {
     try {
       setLoading(true); setError(null);
       const y = date.getFullYear(), m = date.getMonth() + 1;
-      const [txRes, catRes] = await Promise.all([api.get(`/transactions?month=${m}&year=${y}`), api.get('/categories')]);
-      setTransactions((txRes.data.transactions ?? txRes.data).map(t => ({ ...t, date: new Date(t.date + 'T12:00:00'), repeat_end_date: t.repeat_end_date ? new Date(t.repeat_end_date + 'T12:00:00') : null })));
-      setCategories(catRes.data);
+      const [txResult, catResult] = await Promise.all([
+        transactionsApi.listMonthly(y, m),
+        categoriesApi.list(),
+      ]);
+      setTransactions((txResult.data ?? []).map(mapTx));
+      setCategories(catResult.data ?? []);
     } catch { setError('No se pudieron cargar los datos.'); } finally { setLoading(false); }
   };
 
   const monthDir = (dir) => { const d = new Date(date); d.setMonth(d.getMonth() + dir); setDate(d); };
-  const getCat = (id) => categories.find(c => c.id === id);
 
   const filtered = filter === 'Todos' ? transactions : transactions.filter(t => t.type === (filter === 'Ingresos' ? 'income' : 'expense'));
 
@@ -90,12 +103,7 @@ const Transactions = () => {
 
       <div className="flex gap-2 lg:gap-3 mb-6">
         {FILTERS.map(f => (
-          <Button 
-            key={f} 
-            variant={filter === f ? 'primary' : 'ghost'} 
-            size="sm"
-            onClick={() => setFilter(f)}
-          >
+          <Button key={f} variant={filter === f ? 'primary' : 'ghost'} size="sm" onClick={() => setFilter(f)}>
             {f}
           </Button>
         ))}
@@ -123,10 +131,10 @@ const Transactions = () => {
             </div>
             <Card>
               {txs.map((tx, idx) => {
-                const cat = getCat(tx.category_id);
+                const cat = tx.category;
                 const isIncome = tx.type === 'income';
                 return (
-                  <div key={tx.id} className={`flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3.5 lg:py-4 ${idx < txs.length - 1 ? 'border-b border-[var(--separator)]' : ''}`}>
+                  <div key={`${tx.id}-${idx}`} className={`flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3.5 lg:py-4 ${idx < txs.length - 1 ? 'border-b border-[var(--separator)]' : ''}`}>
                     <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${isIncome ? 'bg-success/10' : 'bg-error/10'}`}>
                       {cat?.emoji || (isIncome ? '💰' : '💸')}
                     </div>
@@ -138,20 +146,12 @@ const Transactions = () => {
                       {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
                     </p>
                     <div className="flex gap-1 flex-shrink-0">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="rounded-lg bg-base-200/40 hover:bg-base-200/70"
-                        onClick={() => setModal({ mode: 'edit', data: { ...tx } })}
-                      >
+                      <Button variant="ghost" size="sm" className="rounded-lg bg-base-200/40 hover:bg-base-200/70"
+                        onClick={() => setModal({ mode: 'edit', data: { ...tx, date: new Date(tx.date) } })}>
                         <FiEdit size={16} />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="rounded-lg bg-base-200/40 hover:bg-base-200/70 text-error"
-                        onClick={async () => { if (window.confirm('¿Eliminar esta transacción?')) { try { await api.delete(`/transactions/${tx.id}`); fetchData(); } catch { alert('Error al eliminar.'); } } }}
-                      >
+                      <Button variant="ghost" size="sm" className="rounded-lg bg-base-200/40 hover:bg-base-200/70 text-error"
+                        onClick={async () => { if (window.confirm('¿Eliminar?')) { try { await transactionsApi.remove(tx.id); fetchData(); } catch { alert('Error.'); } } }}>
                         <FiTrash size={16} />
                       </Button>
                     </div>
@@ -170,10 +170,17 @@ const Transactions = () => {
           categories={categories}
           onSubmit={async (payload) => {
             try {
-              const body = { ...payload, date: payload.date.toISOString().slice(0, 10) };
+              const body = {
+                description: payload.description,
+                amount: payload.amount,
+                type: payload.type,
+                date: payload.date.toISOString().slice(0, 10),
+                category_id: payload.category_id,
+                repeat_frequency: payload.repeat_frequency || 'none',
+              };
               if (payload.repeat_end_date) body.repeat_end_date = payload.repeat_end_date.toISOString().slice(0, 10);
-              if (modal.mode === 'create') await api.post('/transactions', body);
-              else await api.put(`/transactions/${payload.id}`, body);
+              if (modal.mode === 'create') await transactionsApi.create(body);
+              else await transactionsApi.update(payload.id, body);
               setModal(null);
               fetchData();
             } catch { alert('Error al guardar.'); }

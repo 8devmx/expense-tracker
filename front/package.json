@@ -11,9 +11,8 @@
     "init-tailwind": "tailwindcss init -p"
   },
   "dependencies": {
-    "@react-oauth/google": "^0.12.2",
+    "@supabase/supabase-js": "^2.108.1",
     "@tailwindcss/postcss": "^4.1.11",
-    "axios": "^1.11.0",
     "pikaday": "^1.8.2",
     "react": "^19.1.0",
     "react-datepicker": "^8.4.0",

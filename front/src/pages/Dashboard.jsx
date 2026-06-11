@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { transactionsApi } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '../utils/format';
 import { FiDownload, FiArrowUp, FiArrowDown, FiDollarSign } from 'react-icons/fi';
 import { Button, Card, CardBody, CardTitle, StatCard } from '../components/ui';
 
+const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 const Dashboard = () => {
   const [data, setData] = useState({ monthly: [], totals: { income: 0, expenses: 0, balance: 0 }, categories: [] });
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -16,41 +17,61 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const year = new Date().getFullYear();
-        const promises = Array.from({ length: 12 }, (_, i) => api.get(`/transactions?month=${i + 1}&year=${year}`));
-        const responses = await Promise.all(promises);
+        const { data: txData, error: txError } = await transactionsApi.listYear(year);
+        if (txError) throw txError;
 
         let totalIncome = 0, totalExpenses = 0;
         const catMap = {};
+        const monthlyData = Array.from({ length: 12 }, () => ({ income: 0, expenses: 0 }));
 
-        const monthly = responses.map((res, i) => {
-          const txs = res.data.transactions ?? res.data;
-          let inc = 0, exp = 0;
-          txs.forEach(t => {
-            const a = parseFloat(t.amount);
-            if (t.type === 'income') { inc += a; totalIncome += a; }
-            else { exp += a; totalExpenses += a; }
-            if (t.category) {
-              if (!catMap[t.category.name]) catMap[t.category.name] = { income: 0, expenses: 0 };
-              if (t.type === 'income') catMap[t.category.name].income += a;
-              else catMap[t.category.name].expenses += a;
-            }
-          });
-          return { month: new Date(year, i).toLocaleString('es-ES', { month: 'short' }), Ingresos: inc, Gastos: exp };
-        });
+        for (const tx of (txData ?? [])) {
+          const a = parseFloat(tx.amount);
+          const m = tx.month - 1;
+          if (tx.type === 'income') {
+            monthlyData[m].income += a;
+            totalIncome += a;
+          } else {
+            monthlyData[m].expenses += a;
+            totalExpenses += a;
+          }
+          const catName = tx.category_name || 'Sin categoría';
+          if (!catMap[catName]) catMap[catName] = { income: 0, expenses: 0, emoji: tx.category_emoji, color: tx.category_color };
+          if (tx.type === 'income') catMap[catName].income += a;
+          else catMap[catName].expenses += a;
+        }
+
+        const monthly = monthlyData.map((m, i) => ({
+          month: MONTHS[i],
+          Ingresos: m.income,
+          Gastos: m.expenses,
+        }));
 
         setData({
           monthly,
           totals: { income: totalIncome, expenses: totalExpenses, balance: totalIncome - totalExpenses },
-          categories: Object.entries(catMap).map(([name, t]) => ({ name, ...t })),
+          categories: Object.entries(catMap).map(([name, c]) => ({ name, ...c })),
         });
       } catch { setError('No se pudieron cargar los datos.'); } finally { setLoading(false); }
     };
     fetch();
   }, []);
 
-  const handleExport = async () => {
-    setExporting(true);
-    try { await api.post('/export/transactions'); alert('Exportación completada.'); } catch { alert('Error al exportar.'); } finally { setExporting(false); }
+  const handleExport = () => {
+    const year = new Date().getFullYear();
+    const rows = [['Fecha', 'Tipo', 'Categoría', 'Monto', 'Descripción']];
+    try {
+      transactionsApi.listYear(year).then(({ data: txData }) => {
+        for (const tx of (txData ?? [])) {
+          rows.push([tx.date, tx.type, tx.category_name || '', String(tx.amount), tx.description]);
+        }
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `gastos-${year}.csv`; a.click();
+        URL.revokeObjectURL(url);
+      });
+    } catch { alert('Error al exportar.'); }
   };
 
   if (loading) return (
@@ -96,10 +117,8 @@ const Dashboard = () => {
             </span>
           </div>
           <div className="h-1.5 rounded-full bg-base-200 overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300 group-hover:opacity-70"
-              style={{ width: `${Math.max(pct, 2)}%`, background: color }}
-            />
+            <div className="h-full rounded-full transition-all duration-300 group-hover:opacity-70"
+              style={{ width: `${Math.max(pct, 2)}%`, background: color }} />
           </div>
         </div>
       </div>
@@ -109,7 +128,6 @@ const Dashboard = () => {
   return (
     <div className="space-y-8 lg:space-y-12">
 
-      {/* Hero: Balance neto */}
       <section className="animate-slideUp">
         <div className="flex items-center justify-between mb-2">
           <p className="section-label">Balance neto</p>
@@ -125,40 +143,19 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Acciones + Stats */}
       <div className="flex justify-end -mt-2 animate-slideUp" style={{ animationDelay: '40ms' }}>
-        <Button variant="ghost" size="sm" onClick={handleExport} disabled={exporting}>
+        <Button variant="ghost" size="sm" onClick={handleExport}>
           <FiDownload size={14} />
-          {exporting ? 'Exportando...' : 'Exportar'}
+          Exportar CSV
         </Button>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-3 gap-3 lg:gap-5">
-        <StatCard
-          icon={<FiArrowUp size={18} />}
-          label="Ingresos"
-          value={formatCurrency(totals.income)}
-          color="var(--color-success)"
-          delay={80}
-        />
-        <StatCard
-          icon={<FiArrowDown size={18} />}
-          label="Gastos"
-          value={formatCurrency(totals.expenses)}
-          color="var(--color-error)"
-          delay={140}
-        />
-        <StatCard
-          icon={<FiDollarSign size={18} />}
-          label="Balance"
-          value={formatCurrency(totals.balance)}
-          color="var(--color-primary)"
-          delay={200}
-        />
+        <StatCard icon={<FiArrowUp size={18} />} label="Ingresos" value={formatCurrency(totals.income)} color="var(--color-success)" delay={80} />
+        <StatCard icon={<FiArrowDown size={18} />} label="Gastos" value={formatCurrency(totals.expenses)} color="var(--color-error)" delay={140} />
+        <StatCard icon={<FiDollarSign size={18} />} label="Balance" value={formatCurrency(totals.balance)} color="var(--color-primary)" delay={200} />
       </div>
 
-      {/* Gráfico mensual */}
       <section className="animate-slideUp" style={{ animationDelay: '100ms' }}>
         <Card>
           <CardBody>
@@ -168,18 +165,12 @@ const Dashboard = () => {
                 <CartesianGrid stroke="var(--separator)" vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + (v / 1000).toFixed(0) + 'k'} />
-                <Tooltip
-                  formatter={(v) => formatCurrency(v)}
+                <Tooltip formatter={(v) => formatCurrency(v)}
                   contentStyle={{
-                    background: 'var(--color-base-100)',
-                    border: '1px solid var(--separator)',
-                    borderRadius: 'var(--radius-sm)',
-                    boxShadow: 'var(--shadow-lg)',
-                    fontSize: 13,
-                    padding: '8px 12px',
+                    background: 'var(--color-base-100)', border: '1px solid var(--separator)',
+                    borderRadius: 'var(--radius-sm)', boxShadow: 'var(--shadow-lg)', fontSize: 13, padding: '8px 12px',
                   }}
-                  cursor={{ fill: 'var(--separator)' }}
-                />
+                  cursor={{ fill: 'var(--separator)' }} />
                 <Bar dataKey="Ingresos" fill="var(--color-success)" radius={[3, 3, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="Gastos" fill="var(--color-error)" radius={[3, 3, 0, 0]} maxBarSize={28} />
               </BarChart>
@@ -188,7 +179,6 @@ const Dashboard = () => {
         </Card>
       </section>
 
-      {/* Resumen por categoría */}
       <section className="animate-slideUp" style={{ animationDelay: '160ms' }}>
         <Card>
           <CardBody className="p-0">
@@ -206,9 +196,7 @@ const Dashboard = () => {
                       <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-base-content/40">Ingresos</span>
                       <span className="text-[10px] text-base-content/20 ml-auto tabular-nums">{incomeCats.length} categorías</span>
                     </div>
-                    {incomeCats.map((cat, i) => (
-                      <CategoryRow key={`inc-${i}`} name={cat.name} amount={cat.income} total={totalIncomeCats} color="var(--color-success)" />
-                    ))}
+                    {incomeCats.map((cat, i) => <CategoryRow key={`inc-${i}`} name={cat.name} amount={cat.income} total={totalIncomeCats} color="var(--color-success)" />)}
                   </div>
                 )}
                 {hasExpenses && (
@@ -218,9 +206,7 @@ const Dashboard = () => {
                       <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-base-content/40">Gastos</span>
                       <span className="text-[10px] text-base-content/20 ml-auto tabular-nums">{expenseCats.length} categorías</span>
                     </div>
-                    {expenseCats.map((cat, i) => (
-                      <CategoryRow key={`exp-${i}`} name={cat.name} amount={cat.expenses} total={totalExpenseCats} color="var(--color-error)" />
-                    ))}
+                    {expenseCats.map((cat, i) => <CategoryRow key={`exp-${i}`} name={cat.name} amount={cat.expenses} total={totalExpenseCats} color="var(--color-error)" />)}
                   </div>
                 )}
               </div>

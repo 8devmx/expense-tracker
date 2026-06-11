@@ -2,7 +2,7 @@ import { useUser } from '../contexts/UserContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
-import api from '../services/api';
+import { auth } from '../services/api';
 
 const THEME_DARK = 'expense-tracker-dark';
 
@@ -23,8 +23,7 @@ const Header = () => {
   };
 
   const handleLogout = async () => {
-    try { await api.post('/auth/logout'); } catch {} finally {
-      localStorage.removeItem('auth_token');
+    try { await auth.signOut(); } catch {} finally {
       navigate('/', { replace: true });
     }
   };
@@ -53,8 +52,8 @@ const Header = () => {
             className="w-10 h-10 rounded-full hover:bg-base-200 active:bg-base-300 transition-colors flex items-center justify-center text-base-content/60 hover:text-base-content"
             aria-label="Cerrar sesión"
           >
-            {user.profile_picture_url ? (
-              <img src={user.profile_picture_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+            {user.user_metadata?.avatar_url ? (
+              <img src={user.user_metadata.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
             ) : (
               <FiLogOut size={18} />
             )}

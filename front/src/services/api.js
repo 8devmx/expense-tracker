@@ -1,39 +1,67 @@
-import axios from 'axios';
+import { createClient } from '@supabase/supabase-js'
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
+
+export const auth = {
+  googleSignIn: () =>
+    supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/expense-tracker' },
+    }),
+  emailSignIn: (email, password) =>
+    supabase.auth.signInWithPassword({ email, password }),
+  emailSignUp: (email, password, name) =>
+    supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name } },
+    }),
+  signOut: () => supabase.auth.signOut(),
+  getUser: () => supabase.auth.getUser(),
+  getSession: () => supabase.auth.getSession(),
+  onAuthChange: (cb) => supabase.auth.onAuthStateChange(cb),
+}
+
+export const categoriesApi = {
+  list: () =>
+    supabase.from('categories').select('*').order('name'),
+  create: (data) =>
+    supabase.from('categories').insert(data).select().single(),
+  update: (id, data) =>
+    supabase.from('categories').update(data).eq('id', id).select().single(),
+  remove: (id) =>
+    supabase.from('categories').delete().eq('id', id),
+}
+
+export const transactionsApi = {
+  listMonthly: async (year, month) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.rpc('get_monthly_transactions', {
+      p_user_id: user.id, p_year: year, p_month: month,
+    })
   },
-});
-
-// Adjuntar token en cada request
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+  listYear: async (year) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.rpc('get_year_transactions', {
+      p_user_id: user.id, p_year: year,
+    })
   },
-  (error) => Promise.reject(error)
-);
+  create: (data) =>
+    supabase.from('transactions').insert(data).select().single(),
+  update: (id, data) =>
+    supabase.from('transactions').update(data).eq('id', id).select().single(),
+  remove: (id) =>
+    supabase.from('transactions').delete().eq('id', id),
+}
 
-// Si el servidor responde 401, el token expiró o es inválido:
-// limpiar localStorage y redirigir al login
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      // Redirigir solo si no estamos ya en /login
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-export default api;
+export const settingsApi = {
+  get: () =>
+    supabase.from('user_settings').select('*').single(),
+  update: (data) =>
+    supabase.from('user_settings').update(data).select().single(),
+}

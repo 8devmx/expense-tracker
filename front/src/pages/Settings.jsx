@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import { settingsApi, auth } from '../services/api';
 import { FiSun, FiMoon, FiLogOut, FiChevronRight } from 'react-icons/fi';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 
 const THEME_DARK = 'expense-tracker-dark';
 
@@ -13,20 +14,21 @@ const Section = ({ title, children }) => (
 );
 
 const Settings = () => {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState({ transaction_month_start_day: 1 });
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
-    api.get('/settings').then(res => {
-      setSettings({ transaction_month_start_day: res.data.transaction_month_start_day || 1 });
+    settingsApi.get().then(({ data }) => {
+      if (data) setSettings({ transaction_month_start_day: data.transaction_month_start_day || 1 });
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const handleSave = async (day) => {
     try {
-      await api.put('/settings', { transaction_month_start_day: day });
+      await settingsApi.update({ transaction_month_start_day: day });
       setSettings(p => ({ ...p, transaction_month_start_day: day }));
       setMessage({ type: 'success', text: 'Guardado' });
       setTimeout(() => setMessage(null), 2000);
@@ -34,9 +36,8 @@ const Settings = () => {
   };
 
   const handleLogout = async () => {
-    try { await api.post('/auth/logout'); } catch {} finally {
-      localStorage.removeItem('auth_token');
-      window.location.href = '/';
+    try { await auth.signOut(); } catch {} finally {
+      navigate('/');
     }
   };
 
@@ -54,12 +55,7 @@ const Settings = () => {
             {theme === THEME_DARK ? <FiMoon /> : <FiSun />}
           </span>
           <span className="flex-1">Modo oscuro</span>
-          <input
-            type="checkbox"
-            checked={theme === THEME_DARK}
-            onChange={toggleTheme}
-            className="toggle toggle-sm"
-          />
+          <input type="checkbox" checked={theme === THEME_DARK} onChange={toggleTheme} className="toggle toggle-sm" />
         </label>
       </Section>
 

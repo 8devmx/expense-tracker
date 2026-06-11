@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
-import api from '../services/api';
+import { auth } from '../services/api';
+import { useUser } from '../contexts/UserContext';
 import { FcGoogle } from 'react-icons/fc';
 import { FiEye, FiEyeOff, FiDollarSign } from 'react-icons/fi';
 import { Button, Input } from '../components/ui';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
 
   useEffect(() => {
-    if (localStorage.getItem('auth_token')) navigate('/dashboard', { replace: true });
-  }, []);
+    if (user) navigate('/dashboard', { replace: true });
+  }, [user]);
 
   const [mode, setMode] = useState('login');
   const [showPw, setShowPw] = useState(false);
@@ -29,29 +30,34 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
-      const payload = mode === 'login'
-        ? { email: form.email, password: form.password }
-        : { name: form.name, email: form.email, password: form.password, password_confirmation: form.password_confirmation };
-      const res = await api.post(endpoint, payload);
-      localStorage.setItem('auth_token', res.data.token);
+      let result;
+      if (mode === 'login') {
+        result = await auth.emailSignIn(form.email, form.password);
+      } else {
+        result = await auth.emailSignUp(form.email, form.password, form.name);
+      }
+      if (result.error) throw result.error;
+      if (!result.data.session && mode === 'register') {
+        setError('Revisa tu correo para confirmar la cuenta.');
+        return;
+      }
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.errors?.email?.[0] || 'Ocurrió un error.');
+      setError(err.message || 'Ocurrió un error.');
     } finally { setLoading(false); }
   };
 
-  const google = useGoogleLogin({
-    onSuccess: async (tr) => {
-      setLoading(true); setError('');
-      try {
-        const res = await api.post('/auth/google/callback', { google_access_token: tr.access_token });
-        localStorage.setItem('auth_token', res.data.token);
-        navigate('/dashboard');
-      } catch { setError('Error al iniciar sesión con Google.'); } finally { setLoading(false); }
-    },
-    onError: () => setError('Inicio de sesión cancelado.'),
-  });
+  const handleGoogle = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await auth.googleSignIn();
+      if (result.error) throw result.error;
+    } catch (err) {
+      setError(err.message || 'Error al iniciar sesión con Google.');
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-base-200 bg-gradient">
@@ -122,7 +128,7 @@ const Login = () => {
 
           <div className="divider text-xs text-base-content/40 my-4">o</div>
 
-          <Button variant="ghost" className="w-full gap-2" type="button" onClick={() => google()} disabled={loading}>
+          <Button variant="ghost" className="w-full gap-2" type="button" onClick={handleGoogle} disabled={loading}>
             <FcGoogle size={20} />
             Continuar con Google
           </Button>
