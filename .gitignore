@@ -14,3 +14,13 @@
 
 # Logs
 *.log
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# Backups
+backup_*.sql
+
+# Credenciales de servicios
+api/storage/credentials/

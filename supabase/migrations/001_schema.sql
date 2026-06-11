@@ -12,7 +12,7 @@ create table if not exists public.categories (
   updated_at timestamptz not null default now()
 );
 
-create index idx_categories_user_id on public.categories(user_id);
+create index if not exists idx_categories_user_id on public.categories(user_id);
 
 -- Transactions
 create table if not exists public.transactions (
@@ -29,9 +29,9 @@ create table if not exists public.transactions (
   updated_at timestamptz not null default now()
 );
 
-create index idx_transactions_user_id on public.transactions(user_id);
-create index idx_transactions_date on public.transactions(date);
-create index idx_transactions_user_date on public.transactions(user_id, date);
+create index if not exists idx_transactions_user_id on public.transactions(user_id);
+create index if not exists idx_transactions_date on public.transactions(date);
+create index if not exists idx_transactions_user_date on public.transactions(user_id, date);
 
 -- User settings
 create table if not exists public.user_settings (
@@ -42,4 +42,4 @@ create table if not exists public.user_settings (
   updated_at timestamptz not null default now()
 );
 
-create index idx_user_settings_user_id on public.user_settings(user_id);
+create index if not exists idx_user_settings_user_id on public.user_settings(user_id);
