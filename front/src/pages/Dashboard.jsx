@@ -80,9 +80,9 @@ const Dashboard = () => {
         <div className="h-3 w-24 bg-base-300/50 rounded-full animate-pulse" />
         <div className="h-9 w-48 bg-base-300/50 rounded-xl animate-pulse" />
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        {[0, 1, 2].map(i => (
-          <div key={i} className="card bg-base-100 border surface-2 p-5 space-y-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {[0, 1, 2].map((_, i) => (
+          <div key={i} className={`card bg-base-100 border surface-2 p-5 space-y-4 ${i === 2 ? 'col-span-2 lg:col-span-1' : ''}`}>
             <div className="w-9 h-9 rounded-[10px] bg-base-200 animate-pulse" />
             <div className="space-y-2">
               <div className="h-3 w-16 bg-base-200 rounded-full animate-pulse" />
@@ -150,10 +150,12 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 lg:gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-5">
         <StatCard icon={<FiArrowUp size={18} />} label="Ingresos" value={formatCurrency(totals.income)} color="var(--color-success)" delay={80} />
         <StatCard icon={<FiArrowDown size={18} />} label="Gastos" value={formatCurrency(totals.expenses)} color="var(--color-error)" delay={140} />
-        <StatCard icon={<FiDollarSign size={18} />} label="Balance" value={formatCurrency(totals.balance)} color="var(--color-primary)" delay={200} />
+        <div className="col-span-2 lg:col-span-1">
+          <StatCard icon={<FiDollarSign size={18} />} label="Balance" value={formatCurrency(totals.balance)} color="var(--color-primary)" delay={200} />
+        </div>
       </div>
 
       <section className="animate-slideUp" style={{ animationDelay: '100ms' }}>

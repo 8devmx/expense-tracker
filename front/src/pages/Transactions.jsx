@@ -84,13 +84,13 @@ const Transactions = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 lg:gap-5 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 mb-6">
         {[
           { label: 'Ingresos', value: totals.income, color: 'var(--color-success)' },
           { label: 'Gastos', value: totals.expenses, color: 'var(--color-error)' },
           { label: 'Balance', value: totals.balance, color: 'var(--color-primary)' },
-        ].map(s => (
-          <Card key={s.label} className="overflow-hidden">
+        ].map((s, i) => (
+          <Card key={s.label} className={`overflow-hidden ${i === 2 ? 'col-span-2 lg:col-span-1' : ''}`}>
             <CardBody className="p-4">
               <p className="section-label mb-2">{s.label}</p>
               <p className="amount text-lg font-bold" style={{ color: s.color }}>
