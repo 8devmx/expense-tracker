@@ -103,7 +103,7 @@ const Transactions = () => {
 
       <div className="flex gap-2 lg:gap-3 mb-6">
         {FILTERS.map(f => (
-          <Button key={f} variant={filter === f ? 'primary' : 'ghost'} size="sm" onClick={() => setFilter(f)}>
+          <Button key={f} variant={filter === f ? 'primary' : 'ghost'} size="sm" className="flex-1" onClick={() => setFilter(f)}>
             {f}
           </Button>
         ))}

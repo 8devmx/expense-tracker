@@ -63,6 +63,7 @@ const TransactionModal = ({ mode = 'create', initialData, categories, onSubmit, 
                   label="Monto"
                   leftIcon={<span className={`text-lg font-bold ${isIncome ? 'text-success' : 'text-error'}`}>$</span>}
                   type="number"
+                  inputMode="decimal"
                   value={data.amount}
                   onChange={e => set('amount', e.target.value)}
                   inputClassName={`text-lg font-bold ${isIncome ? 'text-success' : 'text-error'}`}
