@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
-  base: '/expense-tracker/',
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/expense-tracker/' : '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -15,7 +15,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
-        navigateFallback: '/expense-tracker/offline.html',
+        navigateFallback: command === 'build' ? '/expense-tracker/offline.html' : '/offline.html',
         navigateFallbackDenylist: [/^\/api/, /^\/.*\.(js|css|ico|png|svg|woff2)$/],
         navigationPreload: true,
         runtimeCaching: [
@@ -42,4 +42,4 @@ export default defineConfig({
   server: {
     allowedHosts: ['bfee19d8d69c.ngrok-free.app'],
   },
-})
+}))

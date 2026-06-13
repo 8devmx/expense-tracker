@@ -9,7 +9,7 @@ export const auth = {
   googleSignIn: () =>
     supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/expense-tracker' },
+      options: { redirectTo: window.location.origin + (import.meta.env.PROD ? '/expense-tracker' : '') },
     }),
   emailSignIn: (email, password) =>
     supabase.auth.signInWithPassword({ email, password }),
@@ -28,8 +28,11 @@ export const auth = {
 export const categoriesApi = {
   list: () =>
     supabase.from('categories').select('*').order('name'),
-  create: (data) =>
-    supabase.from('categories').insert(data).select().single(),
+  create: async (data) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.from('categories').insert({ ...data, user_id: user.id }).select().single()
+  },
   update: (id, data) =>
     supabase.from('categories').update(data).eq('id', id).select().single(),
   remove: (id) =>
@@ -51,8 +54,11 @@ export const transactionsApi = {
       p_user_id: user.id, p_year: year,
     })
   },
-  create: (data) =>
-    supabase.from('transactions').insert(data).select().single(),
+  create: async (data) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.from('transactions').insert({ ...data, user_id: user.id }).select().single()
+  },
   update: (id, data) =>
     supabase.from('transactions').update(data).eq('id', id).select().single(),
   remove: (id) =>
