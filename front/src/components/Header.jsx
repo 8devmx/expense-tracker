@@ -16,6 +16,7 @@ const Header = () => {
     switch (pathname) {
       case '/dashboard': return 'Dashboard';
       case '/transactions': return 'Transacciones';
+      case '/budgets': return 'Presupuestos';
       case '/categories': return 'Categorías';
       case '/settings': return 'Ajustes';
       default: return '';

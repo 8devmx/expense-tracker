@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { LuChartColumn, LuArrowLeftRight, LuGrid3X3, LuSettings } from 'react-icons/lu';
+import { LuChartColumn, LuArrowLeftRight, LuTarget, LuGrid3X3, LuSettings } from 'react-icons/lu';
 
 const tabs = [
   { to: '/dashboard', icon: LuChartColumn, label: 'Dashboard' },
   { to: '/transactions', icon: LuArrowLeftRight, label: 'Movimientos' },
+  { to: '/budgets', icon: LuTarget, label: 'Presupuestos' },
   { to: '/categories', icon: LuGrid3X3, label: 'Categorías' },
   { to: '/settings', icon: LuSettings, label: 'Ajustes' },
 ];

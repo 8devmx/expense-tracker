@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { transactionsApi } from '../services/api';
+import { transactionsApi, budgetsApi } from '../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '../utils/format';
-import { FiDownload, FiArrowUp, FiArrowDown, FiDollarSign } from 'react-icons/fi';
+import { FiDownload, FiArrowUp, FiArrowDown, FiDollarSign, FiTarget } from 'react-icons/fi';
 import { Button, Card, CardBody, CardTitle, StatCard } from '../components/ui';
+import { useNavigate } from 'react-router-dom';
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 const Dashboard = () => {
   const [data, setData] = useState({ monthly: [], totals: { income: 0, expenses: 0, balance: 0 }, categories: [] });
+  const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetch = async () => {
@@ -51,6 +54,9 @@ const Dashboard = () => {
           totals: { income: totalIncome, expenses: totalExpenses, balance: totalIncome - totalExpenses },
           categories: Object.entries(catMap).map(([name, c]) => ({ name, ...c })),
         });
+
+        const { data: budgetData } = await budgetsApi.getProgress()
+        setBudgets(budgetData ?? [])
       } catch { setError('No se pudieron cargar los datos.'); } finally { setLoading(false); }
     };
     fetch();
@@ -216,6 +222,60 @@ const Dashboard = () => {
           </CardBody>
         </Card>
       </section>
+
+      {budgets.length > 0 && (
+        <section className="animate-slideUp" style={{ animationDelay: '220ms' }}>
+          <Card>
+            <CardBody>
+              <div className="flex items-center justify-between mb-4">
+                <CardTitle className="text-[15px]">Presupuestos del mes</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/budgets')}>
+                  <FiTarget size={14} className="mr-1" />
+                  Ver todo
+                </Button>
+              </div>
+              <div className="space-y-3">
+                {budgets.slice(0, 4).map(b => {
+                  const pct = b.percentage || 0
+                  const isOver = pct >= 100
+                  const barColor = isOver ? 'var(--color-error)' : pct > 85 ? 'var(--color-warning)' : 'var(--color-success)'
+                  return (
+                    <div key={b.category_id} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                        style={{ background: `${b.category_color || '#86868b'}1A` }}>
+                        {b.category_emoji || '🎯'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs font-medium">{b.category_name}</span>
+                          <span className="text-[11px] font-semibold tabular-nums" style={{ color: barColor }}>
+                            {isOver ? `+${formatCurrency(Math.abs(b.remaining))}` : formatCurrency(b.remaining)}
+                          </span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-base-200 overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(pct, 100)}%`, background: barColor }} />
+                        </div>
+                        <div className="flex justify-between mt-0.5">
+                          <span className="text-[10px] text-base-content/40">
+                            {formatCurrency(b.spent)} <span className="text-base-content/20">/</span> {formatCurrency(b.budget_amount)}
+                          </span>
+                          <span className="text-[10px] font-medium" style={{ color: barColor }}>{pct}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {budgets.length > 4 && (
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => navigate('/budgets')}>
+                    Ver los {budgets.length} presupuestos
+                  </Button>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </section>
+      )}
 
     </div>
   );

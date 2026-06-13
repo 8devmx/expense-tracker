@@ -65,6 +65,25 @@ export const transactionsApi = {
     supabase.from('transactions').delete().eq('id', id),
 }
 
+export const budgetsApi = {
+  list: () =>
+    supabase.from('budgets').select('*, categories(name, emoji, color)').order('id'),
+  getProgress: async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.rpc('get_budget_progress', { p_user_id: user.id })
+  },
+  create: async (data) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+    return supabase.from('budgets').insert({ ...data, user_id: user.id }).select().single()
+  },
+  update: (id, data) =>
+    supabase.from('budgets').update(data).eq('id', id).select().single(),
+  remove: (id) =>
+    supabase.from('budgets').delete().eq('id', id),
+}
+
 export const settingsApi = {
   get: () =>
     supabase.from('user_settings').select('*').single(),

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import Budgets from './pages/Budgets';
 import Categories from './pages/Categories';
 import Transactions from './pages/Transactions';
 import Settings from './pages/Settings';
@@ -29,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><Dashboard /></ProtectedLayout></ProtectedRoute>} />
+          <Route path="/budgets" element={<ProtectedRoute><ProtectedLayout><Budgets /></ProtectedLayout></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><ProtectedLayout><Categories /></ProtectedLayout></ProtectedRoute>} />
           <Route path="/transactions" element={<ProtectedRoute><ProtectedLayout><Transactions /></ProtectedLayout></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><ProtectedLayout><Settings /></ProtectedLayout></ProtectedRoute>} />
