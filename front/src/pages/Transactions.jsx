@@ -75,14 +75,6 @@ const Transactions = () => {
             <FiChevronRight size={20} />
           </Button>
         </div>
-        <Button 
-          variant="primary" 
-          size="md" 
-          onClick={() => setModal({ mode: 'create', data: { description: '', amount: '', type: 'expense', date: new Date(), category_id: '', repeat_frequency: 'none', repeat_end_date: null } })}
-        >
-          <FiPlus size={18} />
-          Nuevo
-        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5 mb-6">
@@ -155,6 +147,14 @@ const Transactions = () => {
           </div>
         ))
       )}
+
+      <button
+        onClick={() => setModal({ mode: 'create', data: { description: '', amount: '', type: 'expense', date: new Date(), category_id: '', repeat_frequency: 'none', repeat_end_date: null } })}
+        className="fixed bottom-24 lg:bottom-28 right-5 lg:right-10 z-40 w-14 h-14 rounded-2xl bg-primary text-primary-content shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-200 active:scale-95 flex items-center justify-center"
+        aria-label="Nueva transacción"
+      >
+        <FiPlus size={24} />
+      </button>
 
       {modal && (
         <TransactionModal
