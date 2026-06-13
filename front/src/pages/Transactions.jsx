@@ -67,7 +67,7 @@ const Transactions = () => {
           <Button variant="ghost" size="sm" className="px-2" onClick={() => monthDir(-1)}>
             <FiChevronLeft size={20} />
           </Button>
-          <p className="font-display text-lg font-bold tracking-tight min-w-[140px] text-center">
+          <p className="font-display text-lg font-bold tracking-tight min-w-[100px] sm:min-w-[140px] text-center">
             {date.toLocaleString('es-ES', { month: 'long', year: 'numeric' })}
           </p>
           <Button variant="ghost" size="sm" className="px-2" onClick={() => monthDir(1)}>

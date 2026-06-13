@@ -13,7 +13,7 @@ import IOSInstallHint from './components/IOSInstallHint';
 
 function App() {
   const ProtectedLayout = ({ children }) => (
-    <div className="flex flex-col min-h-screen bg-gradient">
+    <div className="flex flex-col min-h-screen bg-gradient overflow-x-hidden">
       <Header />
       <main className="flex-1 px-5 lg:px-10 py-8 lg:py-12 pb-32 max-w-3xl lg:max-w-6xl w-full mx-auto">
         {children}

@@ -108,7 +108,7 @@ const Dashboard = () => {
   const CategoryRow = ({ name, amount, total, color }) => {
     const pct = total > 0 ? (amount / total) * 100 : 0;
     return (
-      <div className="group flex items-center gap-4 py-3 lg:py-3.5 px-2 -mx-2 rounded-xl hover:bg-base-200/40 transition-colors cursor-default">
+      <div className="group flex items-center gap-4 py-3 lg:py-3.5 px-2 rounded-xl hover:bg-base-200/40 transition-colors cursor-default">
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-sm font-medium text-base-content">{name}</span>
@@ -163,7 +163,7 @@ const Dashboard = () => {
           <CardBody>
             <CardTitle className="mb-6 text-[15px]">Balance mensual</CardTitle>
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={monthly} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
+                <BarChart data={monthly} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="var(--separator)" vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="month" tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill: 'var(--text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => '$' + (v / 1000).toFixed(0) + 'k'} />

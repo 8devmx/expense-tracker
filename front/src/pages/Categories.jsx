@@ -17,7 +17,7 @@ const hexToRgba = (hex, a = 0.12) => {
 const Section = ({ title, categories, onEdit, onDelete }) => (
   <div className="mb-4">
     <p className="section-label mb-2">{title}</p>
-    <div className="grid grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 lg:gap-3">
+    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 lg:gap-3">
       {categories.map(cat => (
         <div key={cat.id} className="card bg-base-100 shadow-sm hover:shadow-md transition-all duration-200">
           <div className="flex flex-col items-center gap-1.5 p-3.5 relative">
