@@ -366,3 +366,36 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row
   execute function public.handle_new_user();
+
+-- 005_triggers_set_user_id.sql
+create or replace function public.set_user_id()
+returns trigger
+security definer
+as $$
+begin
+  new.user_id := auth.uid();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_set_transactions_user_id on public.transactions;
+create trigger trg_set_transactions_user_id
+  before insert on public.transactions
+  for each row
+  when (new.user_id is null)
+  execute function public.set_user_id();
+
+drop trigger if exists trg_set_categories_user_id on public.categories;
+create trigger trg_set_categories_user_id
+  before insert on public.categories
+  for each row
+  when (new.user_id is null)
+  execute function public.set_user_id();
+
+alter table public.transactions
+  alter column id drop identity if exists,
+  alter column id add generated always as identity;
+
+alter table public.categories
+  alter column id drop identity if exists,
+  alter column id add generated always as identity;
