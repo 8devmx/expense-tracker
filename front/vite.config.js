@@ -17,7 +17,7 @@ export default defineConfig(({ command }) => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: command === 'build' ? '/expense-tracker/offline.html' : '/offline.html',
         navigateFallbackDenylist: [/^\/api/, /^\/.*\.(js|css|ico|png|svg|woff2)$/],
-        navigationPreload: true,
+        navigationPreload: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
