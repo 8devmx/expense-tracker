@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { transactionsApi, categoriesApi } from '../services/api';
-import { FiChevronLeft, FiChevronRight, FiPlus, FiEdit, FiTrash, FiCalendar } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiPlus, FiCalendar } from 'react-icons/fi';
 import { formatCurrency } from '../utils/format';
 import TransactionModal from '../components/TransactionModal';
 import { Button, Card, CardBody } from '../components/ui';
+import TransactionRow from '../components/TransactionRow';
 
 const FILTERS = ['Todos', 'Ingresos', 'Gastos'];
 
@@ -134,28 +135,20 @@ const Transactions = () => {
                 const cat = tx.category;
                 const isIncome = tx.type === 'income';
                 return (
-                  <div key={`${tx.id}-${idx}`} className={`flex items-center gap-3 lg:gap-4 px-4 lg:px-6 py-3.5 lg:py-4 ${idx < txs.length - 1 ? 'border-b border-[var(--separator)]' : ''}`}>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0 ${isIncome ? 'bg-success/10' : 'bg-error/10'}`}>
-                      {cat?.emoji || (isIncome ? '💰' : '💸')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{tx.description}</p>
-                      <p className="caption mt-0.5">{cat?.name || 'Sin categoría'}</p>
-                    </div>
-                    <p className={`amount text-sm font-semibold whitespace-nowrap ${isIncome ? 'text-success' : 'text-error'}`}>
-                      {isIncome ? '+' : '-'}{formatCurrency(tx.amount)}
-                    </p>
-                    <div className="flex gap-1 flex-shrink-0">
-                      <Button variant="ghost" size="sm" className="rounded-lg bg-base-200/40 hover:bg-base-200/70"
-                        onClick={() => setModal({ mode: 'edit', data: { ...tx, date: new Date(tx.date) } })}>
-                        <FiEdit size={16} />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="rounded-lg bg-base-200/40 hover:bg-base-200/70 text-error"
-                        onClick={async () => { if (window.confirm('¿Eliminar?')) { try { await transactionsApi.remove(tx.id); fetchData(); } catch { alert('Error.'); } } }}>
-                        <FiTrash size={16} />
-                      </Button>
-                    </div>
-                  </div>
+                  <TransactionRow
+                    key={`${tx.id}-${idx}`}
+                    tx={tx}
+                    idx={idx}
+                    total={txs.length}
+                    isIncome={isIncome}
+                    cat={cat}
+                    onEdit={() => setModal({ mode: 'edit', data: { ...tx, date: new Date(tx.date) } })}
+                    onDelete={() => {
+                      if (window.confirm('¿Eliminar?')) {
+                        transactionsApi.remove(tx.id).then(fetchData).catch(() => alert('Error.'))
+                      }
+                    }}
+                  />
                 );
               })}
             </Card>
