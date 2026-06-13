@@ -30,7 +30,7 @@ const TransactionModal = ({ mode = 'create', initialData, categories, onSubmit, 
 
   return (
     <dialog className="modal modal-bottom sm:modal-middle" open>
-      <div className="modal-box p-0 pb-2 max-w-sm">
+      <div className="modal-box p-0 pb-2 max-w-full sm:max-w-sm">
         <div className="sticky top-0 bg-base-100 z-10 rounded-t-2xl">
           <div className="flex items-center justify-between px-5 pt-4 pb-2">
             <div>
