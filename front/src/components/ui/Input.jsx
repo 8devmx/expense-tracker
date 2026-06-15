@@ -19,7 +19,7 @@ export const Input = ({
         </span>
       )}
       <input
-        className={`input input-bordered w-full ${leftIcon ? 'pl-10' : ''} ${rightSlot ? 'pr-12' : ''} ${inputClassName}`}
+        className={`input input-bordered w-full text-base ${leftIcon ? 'pl-10' : ''} ${rightSlot ? 'pr-12' : ''} ${inputClassName}`}
         {...props}
       />
       {rightSlot && (
